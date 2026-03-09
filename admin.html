@@ -891,7 +891,13 @@ let cloudinaryUrl   = null;
 async function loadFromJSONBin() {
   showLoading(true);
   try {
-    const res  = await fetch(JSONBIN_URL + '/latest', { headers: { 'X-Master-Key': JSONBIN_API_KEY } });
+    const res = await fetch(
+  JSONBIN_URL + '/latest?t=' + Date.now(),
+  {
+    headers: { 'X-Master-Key': JSONBIN_API_KEY },
+    cache: "no-store"
+  }
+);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     portfolioData = json.record;
