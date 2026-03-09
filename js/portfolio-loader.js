@@ -3,17 +3,28 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Universal data loader for Rutveek's Portfolio.
  * ALL pages must include this script and call PortfolioLoader.init(pageName, callback).
- * Data is ALWAYS fetched from JSONBin — no local fallback, no hardcoded content.
  *
- * Usage in each HTML page:
- *   <script src="./portfolio-loader.js"></script>
- *   <script>
- *     PortfolioLoader.init('about', (data) => {
- *       // data.meta, data.about, data.resume, etc.
- *       document.querySelector('.bl_about_title').textContent = data.about.heroTitle;
- *       // ... fill in the rest
- *     });
- *   </script>
+ * ── WHAT WAS BROKEN (and why it only happened on Vercel/Netlify not localhost) ──
+ *
+ * BUG 1 — fetch() responses were being cached by the CDN and browser.
+ *   Vercel and Netlify serve through edge CDN nodes. Without an explicit cache
+ *   directive, fetch() lets the browser and CDN cache the JSONBin response.
+ *   On first hard refresh the fresh data arrives. On subsequent visits (or after
+ *   Barba navigation) the stale cached response is returned — data looks blank.
+ *   On localhost there is no CDN layer so every request always hits JSONBin.
+ *   FIX: Add `cache: 'no-store'` to the fetch options.
+ *
+ * BUG 2 — Barba.js (PJAX) does not re-execute inline <script> tags.
+ *   common.js uses Barba.js for client-side page transitions. When you navigate,
+ *   Barba fetches the next page HTML, swaps the .barba-container div, and fires
+ *   lifecycle events — but it never re-runs <script> tags inside the container.
+ *   So PortfolioLoader.init() runs once on hard load but never again. On
+ *   localhost the fast local response hides the blank flash; on production the
+ *   page stays empty until a hard refresh.
+ *   FIX: Register each page's init callback in a map. Use a MutationObserver on
+ *   #barba-wrapper to detect when Barba injects a new .barba-container, read its
+ *   data-namespace, and re-run the matching callback automatically. No changes
+ *   needed in any HTML file.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -24,36 +35,42 @@ const PortfolioLoader = (() => {
   const JSONBIN_API_KEY = '$2a$10$fuZdyhBsUL1u1Co9cqt1kOY3XP.3iFVh9VlXMiB.dBggb1QobBj2q';
   const JSONBIN_URL     = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`;
 
-  // ── NL2BR helper ──────────────────────────────────────────────────────────
-  /**
-   * Convert stored \n characters to <br> for HTML display.
-   * Use this whenever rendering multiline text fields from JSONBin.
-   * @param {string} str
-   * @returns {string}
-   */
+  // Maps page name passed to init() → Barba data-namespace value in HTML
+  const PAGE_NAMESPACE = {
+    home    : 'top',
+    about   : 'about',
+    resume  : 'resume',
+    mywork  : 'mywork',
+    achieve : 'achieve',
+  };
+
+  // Registered callbacks keyed by Barba namespace
+  const _registry = {};
+
+  // ── NL2BR ─────────────────────────────────────────────────────────────────
   function nl2br(str) {
     if (!str) return '';
     return String(str).replace(/\\n/g, '<br>');
   }
 
   // ── FETCH ─────────────────────────────────────────────────────────────────
+  // BUG 1 FIX: cache: 'no-store' bypasses both browser cache and CDN edge cache.
   async function fetchData() {
     const res = await fetch(JSONBIN_URL, {
-      headers: { 'X-Master-Key': JSONBIN_API_KEY }
+      headers : { 'X-Master-Key': JSONBIN_API_KEY },
+      cache   : 'no-store',
     });
     if (!res.ok) throw new Error(`JSONBin fetch failed: HTTP ${res.status}`);
     const json = await res.json();
     return json.record;
   }
 
-  // ── APPLY META / SOCIAL LINKS (common to all pages) ───────────────────────
+  // ── META ──────────────────────────────────────────────────────────────────
   function applyMeta(data) {
     const m = data.meta || {};
 
-    // Page title
     if (m.siteTitle) document.title = document.title || m.siteTitle;
 
-    // Header name
     document.querySelectorAll('#js_topBack, .ly_header_title a').forEach(el => {
       if (el && m.ownerName) {
         const parts = m.ownerName.split(' ');
@@ -63,115 +80,98 @@ const PortfolioLoader = (() => {
       }
     });
 
-    // Social links
-    const socials = {
-      instagram : m.instagram,
-      linkedin  : m.linkedin,
-      twitter   : m.twitter,
-      github    : m.github
-    };
-
     document.querySelectorAll('a[href]').forEach(a => {
       const href = a.getAttribute('href') || '';
-      if (href.includes('instagram.com') && socials.instagram) a.href = socials.instagram;
-      if (href.includes('linkedin.com')  && socials.linkedin)  a.href = socials.linkedin;
-      if (href.includes('twitter.com')   && socials.twitter)   a.href = socials.twitter;
-      if (href.includes('github.com')    && socials.github)    a.href = socials.github;
-      if (href.startsWith('mailto:')     && m.email)           a.href = 'mailto:' + m.email;
+      if (href.includes('instagram.com') && m.instagram) a.href = m.instagram;
+      if (href.includes('linkedin.com')  && m.linkedin)  a.href = m.linkedin;
+      if (href.includes('twitter.com')   && m.twitter)   a.href = m.twitter;
+      if (href.includes('github.com')    && m.github)    a.href = m.github;
+      if (href.startsWith('mailto:')     && m.email)     a.href = 'mailto:' + m.email;
     });
 
-    // Blog links
-    document.querySelectorAll(`a[href*="pantheonsite"], a[href*="dev-rutveek"]`).forEach(a => {
+    document.querySelectorAll('a[href*="pantheonsite"], a[href*="dev-rutveek"]').forEach(a => {
       if (m.blog) a.href = m.blog;
     });
   }
 
-  // ── PUBLIC INIT ────────────────────────────────────────────────────────────
-  /**
-   * @param {string}   page     - 'home' | 'about' | 'resume' | 'mywork' | 'achieve'
-   * @param {Function} callback - receives full data object, called after fetch
-   */
+  // ── RUN FOR NAMESPACE ─────────────────────────────────────────────────────
+  async function _runForNamespace(namespace) {
+    const cb = _registry[namespace];
+    if (typeof cb !== 'function') return;
+    try {
+      const data = await fetchData();
+      applyMeta(data);
+      cb(data);
+    } catch (err) {
+      console.error('[PortfolioLoader] Error for namespace:', namespace, err);
+      _showError();
+    }
+  }
+
+  function _showError() {
+    if (document.getElementById('_pl_err')) return;
+    const b = document.createElement('div');
+    b.id = '_pl_err';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c0392b;color:#fff;padding:8px 16px;font-size:13px;z-index:9999;text-align:center;';
+    b.textContent = 'Could not load portfolio data. Please check your connection.';
+    document.body && document.body.prepend(b);
+  }
+
+  // ── BARBA OBSERVER (BUG 2 FIX) ───────────────────────────────────────────
+  // Barba.js swaps page content by inserting a new .barba-container into
+  // #barba-wrapper. We watch for that insertion and re-run the right callback.
+  // This works without touching common.js or any HTML file.
+  function _setupBarbaObserver() {
+    const attach = () => {
+      const wrapper = document.getElementById('barba-wrapper');
+      if (!wrapper) return false;
+
+      new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            if (
+              node.nodeType === 1 &&
+              node.classList &&
+              node.classList.contains('barba-container')
+            ) {
+              const ns = node.getAttribute('data-namespace');
+              if (ns) _runForNamespace(ns);
+            }
+          }
+        }
+      }).observe(wrapper, { childList: true });
+
+      return true;
+    };
+
+    // #barba-wrapper is in <body> so it exists by the time this inline script
+    // runs (portfolio-loader.js is loaded at bottom of body). But if somehow
+    // it's not ready, fall back to DOMContentLoaded.
+    if (!attach()) {
+      document.addEventListener('DOMContentLoaded', attach);
+    }
+  }
+
+  _setupBarbaObserver();
+
+  // ── PUBLIC INIT ───────────────────────────────────────────────────────────
   async function init(page, callback) {
+    const namespace = PAGE_NAMESPACE[page] || page;
+
+    // Register for Barba re-triggers on soft navigation (BUG 2 FIX).
+    _registry[namespace] = callback;
+
+    // Run immediately for hard load / direct URL visit.
     try {
       const data = await fetchData();
       applyMeta(data);
       if (typeof callback === 'function') callback(data);
     } catch (err) {
       console.error('[PortfolioLoader] Error:', err);
-      // Show user-visible error (subtle, non-intrusive)
-      const errBanner = document.createElement('div');
-      errBanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c0392b;color:#fff;padding:8px 16px;font-size:13px;z-index:9999;text-align:center;';
-      errBanner.textContent = '⚠️ Could not load portfolio data. Please check your connection.';
-      document.body.prepend(errBanner);
+      _showError();
     }
   }
 
   return { init, fetchData, applyMeta, nl2br };
 
 })();
-
-/* ─────────────────────────────────────────────────────────────────────────────
- * EXAMPLE IMPLEMENTATIONS FOR EACH PAGE
- * ─────────────────────────────────────────────────────────────────────────────
- *
- * ── index.html (Home) ──
- * PortfolioLoader.init('home', (data) => {
- *   const h = data.home;
- *   // Hero
- *   document.querySelector('.bl_slide_title').innerHTML = h.heroTitle1 + (h.heroTitle2 ? '<br>' + h.heroTitle2 : '');
- *   document.querySelector('#top .bl_slide_text').innerHTML = h.heroSubtitle.replace('\\n','<br>');
- *
- *   // Sections — each section maps to a <section id="about|resume|reile|achieve|blogs">
- *   h.sections.forEach(sec => {
- *     const el = document.getElementById(sec.anchor);
- *     if (!el) return;
- *     const title = el.querySelector('.bl_slide_title');
- *     const text  = el.querySelector('.bl_slide_text');
- *     const img   = el.querySelector('.bl_slide_image');
- *     const link  = el.querySelector('.el_btn');
- *     if (title) title.textContent = sec.title;
- *     if (text)  text.innerHTML    = sec.subtitle;
- *     if (img)   img.src           = sec.image;
- *     if (link)  link.href         = sec.link;
- *   });
- * });
- *
- * ── about.html ──
- * PortfolioLoader.init('about', (data) => {
- *   const a = data.about;
- *   document.querySelector('.bl_about_title').textContent   = a.heroTitle;
- *   document.querySelector('.bl_about_text').textContent    = a.heroSubtitle;
- *   document.querySelector('.bl_about_image').src           = a.heroImage;
- *   document.querySelector('.bl_who_title').textContent     = a.whoText;
- *   document.querySelector('.bl_who_text').textContent      = a.whoBio;
- *   document.querySelector('.bl_who_image').src             = a.profileImage;
- *
- *   const list = document.querySelector('.bl_passion_list');
- *   list.innerHTML = a.passions.map(p => `
- *     <li class="bl_passion_item">
- *       <div class="bl_passion_image"><img src="${p.icon}" alt="${p.title}"></div>
- *       <h3 class="bl_passion_title">${p.title}</h3>
- *       <p class="bl_passion_text">${p.text}</p>
- *     </li>`).join('');
- * });
- *
- * ── resume.html ──
- * PortfolioLoader.init('resume', (data) => {
- *   const r = data.resume;
- *   // Education, Experience, Skills, Involvement, Awards, Extracurricular
- *   // are all in data.resume — use them to dynamically build the DOM
- * });
- *
- * ── mywork.html ──
- * PortfolioLoader.init('mywork', (data) => {
- *   const w = data.mywork;
- *   // data.mywork.publications, .projects, .cadDesigns, .videos
- * });
- *
- * ── achieve.html ──
- * PortfolioLoader.init('achieve', (data) => {
- *   const ac = data.achieve;
- *   // data.achieve.items — array of { title, title2, text, image }
- * });
- * ─────────────────────────────────────────────────────────────────────────────
- */
