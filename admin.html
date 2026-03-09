@@ -355,6 +355,69 @@
 </head>
 <body>
 
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#020b16;
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:99999;
+font-family:Montserrat;
+">
+
+<div style="
+background:#061c37;
+padding:40px;
+border-radius:10px;
+width:320px;
+text-align:center;
+border:1px solid #0d3870;
+">
+
+<h2 style="margin-bottom:20px;color:white;">Admin Login</h2>
+
+<input
+type="password"
+id="adminPassword"
+placeholder="Enter Password"
+style="
+width:100%;
+padding:10px;
+margin-bottom:15px;
+border-radius:6px;
+border:1px solid #0d3870;
+background:#072142;
+color:white;
+"
+>
+
+<button onclick="checkLogin()" style="
+width:100%;
+padding:10px;
+background:#ff4d5a;
+border:none;
+border-radius:6px;
+color:white;
+font-weight:bold;
+cursor:pointer;
+">
+Login
+</button>
+
+<p id="loginError" style="color:red;margin-top:10px;display:none;">
+Wrong password
+</p>
+
+</div>
+</div>
+
+
 <!-- Loading Screen -->
 <div class="loading-screen" id="loadingScreen">
   <div class="loading-logo">RUTVEEK</div>
@@ -401,6 +464,10 @@
     <div class="nav-item" onclick="saveAllData()">
       <span class="icon">💾</span> Save All
     </div>
+
+<div class="nav-item" onclick="logoutAdmin()">
+  <span class="icon">🚪</span> Logout
+</div>
   </nav>
   <div class="sidebar-footer">
     <span class="status-dot" id="statusDot"></span>
@@ -1705,6 +1772,69 @@ window.addEventListener('DOMContentLoaded', () => {
   loadFromJSONBin();
   setupInlinePreviews();
 });
+
+
+
+
+
+// LOGIN SYSTEM
+const ADMIN_PASSWORD = "rutveek@2025"
+
+function checkLogin(){
+
+const pass = document.getElementById("adminPassword").value
+
+if(pass === ADMIN_PASSWORD){
+
+document.getElementById("loginScreen").style.display = "none"
+
+localStorage.setItem("adminAuth","true")
+
+document.getElementById("loginError").style.display="none"
+
+}else{
+
+document.getElementById("loginError").style.display="block"
+
+}
+
+}
+
+
+// keep login session
+window.addEventListener("load",()=>{
+
+const auth = localStorage.getItem("adminAuth")
+
+if(auth === "true"){
+document.getElementById("loginScreen").style.display="none"
+}
+
+const passInput = document.getElementById("adminPassword")
+
+if(passInput){
+passInput.addEventListener("keypress",function(e){
+
+if(e.key==="Enter"){
+checkLogin()
+}
+
+})
+}
+
+})
+
+
+// LOGOUT
+function logoutAdmin(){
+
+localStorage.removeItem("adminAuth")
+
+document.getElementById("loginScreen").style.display="flex"
+
+document.getElementById("adminPassword").value=""
+
+}
 </script>
 </body>
 </html>
