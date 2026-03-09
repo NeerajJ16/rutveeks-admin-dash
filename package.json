@@ -1,0 +1,47 @@
+{
+  "name": "kuon.space",
+  "version": "1.0.0",
+  "description": "",
+  "main": "gulpfile.js",
+  "dependencies": {
+  "@babel/core": "^7.9.0",
+  "@babel/preset-env": "^7.9.5",
+  "animejs": "^3.2.0",
+  "babel-loader": "^8.1.0",
+  "barba.js": "^1.0.0",
+  "browser-sync": "^2.26.7",
+  "gulp": "^4.0.2",
+  "gulp-autoprefixer": "^7.0.1",
+  "gulp-clean-css": "^4.3.0",
+  "gulp-postcss": "^8.0.0",
+  "gulp-sass": "^4.0.2",
+  "gulp-sass-glob": "^1.1.0",
+  "intersection-observer": "^0.9.0",
+  "object-fit-images": "^3.2.4",
+  "postcss-import": "^12.0.1",
+  "sass": "^1.0.0",
+  "webpack": "^4.42.1",
+  "webpack-cli": "^3.3.11",
+  "webpack-stream": "^5.2.1"
+  },
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "gulp-autoprefixer": "^7.0.1",
+    "gulp-clean-css": "^4.3.0",
+    "gulp-postcss": "^8.0.0",
+    "gulp-sass": "^5.1.0",
+    "gulp-sass-glob": "^1.1.0",
+    "postcss-import": "^12.0.1",
+    "sass": "^1.77.0",
+    "webpack-stream": "^7.0.0"
+  },
+  "scripts": {
+  "build": "npx gulp sass && npx gulp bundle",
+  "test": "echo \"Error: no test specified\\\" && exit 1"
+},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/j0811s/kuon.space.git"
+  },
+  "license": "ISC"
+}

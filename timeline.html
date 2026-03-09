@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experience Timeline</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #121212;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .timeline {
+            position: relative;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: 4px;
+            background: #00c6ff;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            position: relative;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            width: 40%;
+            margin: 20px 0;
+            transition: 0.3s;
+        }
+
+        .timeline-item:hover {
+            background: rgba(0, 198, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .timeline-item.left {
+            left: 0;
+            text-align: right;
+        }
+
+        .timeline-item.right {
+            left: 55%;
+        }
+
+        .date {
+            font-weight: bold;
+            color: #00c6ff;
+        }
+
+        .content {
+            margin-top: 10px;
+        }
+
+        .circle {
+            position: absolute;
+            top: 20px;
+            width: 16px;
+            height: 16px;
+            background: #00c6ff;
+            border-radius: 50%;
+            border: 3px solid white;
+        }
+
+        .left .circle {
+            right: -12px;
+        }
+
+        .right .circle {
+            left: -12px;
+        }
+
+        @media (max-width: 768px) {
+            .timeline::after {
+                left: 20px;
+            }
+
+            .timeline-item {
+                width: 80%;
+                left: 10%;
+                text-align: left;
+            }
+
+            .timeline-item.right {
+                left: 10%;
+            }
+
+            .circle {
+                left: -12px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="timeline">
+        <div class="timeline-item left">
+            <div class="circle"></div>
+            <span class="date">2023 - Present</span>
+            <div class="content">
+                <h3>Senior Developer at XYZ Corp</h3>
+                <p>Leading a team of developers to build modern web applications.</p>
+            </div>
+        </div>
+
+        <div class="timeline-item right">
+            <div class="circle"></div>
+            <span class="date">2021 - 2023</span>
+            <div class="content">
+                <h3>Frontend Engineer at ABC Ltd</h3>
+                <p>Worked on improving UI/UX for enterprise clients.</p>
+            </div>
+        </div>
+
+        <div class="timeline-item left">
+            <div class="circle"></div>
+            <span class="date">2018 - 2021</span>
+            <div class="content">
+                <h3>Software Engineer at DEF Inc</h3>
+                <p>Developed innovative solutions using React and Node.js.</p>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

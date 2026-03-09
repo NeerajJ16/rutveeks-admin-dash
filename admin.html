@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Portfolio color palette */
+      --bg:        #020b16;
+      --bg2:       #072142;
+      --surface:   #061c37;
+      --surface2:  #0a2b5d;
+      --border:    #0d3870;
+      --accent:    #ff4d5a;
+      --accent2:   #8c2b7a;
+      --gradient:  linear-gradient(101deg, #072142, #8c2b7a 52%, #ff4d5a);
+      --gradient2: linear-gradient(to right, #072142, #8c2b7a 42%, #ff4d5a);
+      --text:      #ffffff;
+      --text2:     #828c96;
+      --text3:     #c0c5ca;
+      --success:   #4ade80;
+      --warning:   #facc15;
+      --danger:    #ff4d5a;
+      --radius:    8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── SIDEBAR ─────────────────────────────────────── */
+    .sidebar {
+      width: 250px;
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      z-index: 100;
+      overflow-y: auto;
+    }
+
+    .sidebar-logo {
+      padding: 28px 22px 22px;
+      border-bottom: 1px solid var(--border);
+      background: var(--gradient);
+    }
+    .sidebar-logo h1 {
+      font-family: 'Abril Fatface', serif;
+      font-size: 20px;
+      color: #fff;
+      letter-spacing: 1px;
+    }
+    .sidebar-logo p { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 4px; letter-spacing: 2px; text-transform: uppercase; }
+
+    .sidebar-nav { padding: 10px 0; flex: 1; }
+    .nav-section {
+      padding: 18px 22px 6px;
+      font-size: 10px; color: var(--text2);
+      letter-spacing: 3px; text-transform: uppercase;
+      font-family: 'Montserrat', sans-serif; font-weight: 600;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 22px; cursor: pointer;
+      font-size: 13px; color: var(--text2);
+      transition: all 0.2s; border-left: 3px solid transparent;
+      font-weight: 500; letter-spacing: 0.5px;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: var(--surface2); color: var(--accent); border-left-color: var(--accent); }
+    .nav-item .icon { width: 18px; text-align: center; font-size: 15px; }
+
+    .sidebar-footer {
+      padding: 16px 22px;
+      border-top: 1px solid var(--border);
+    }
+    .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+    .status-dot.connected { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .status-dot.error { background: var(--danger); }
+    .status-text { font-size: 11px; color: var(--text2); }
+
+    /* ── MAIN ─────────────────────────────────────────── */
+    .main {
+      margin-left: 250px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 30px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-title {
+      font-family: 'Abril Fatface', serif;
+      font-size: 18px; color: #fff; letter-spacing: 0.5px;
+    }
+    .topbar-title span { color: var(--text2); font-family: 'Montserrat', sans-serif; font-weight: 400; font-size: 13px; margin-left: 10px; }
+
+    /* ── BUTTONS ──────────────────────────────────────── */
+    .btn {
+      padding: 9px 18px; border-radius: 50px; border: none;
+      font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.25s; display: inline-flex; align-items: center; gap: 6px;
+      letter-spacing: 0.5px;
+    }
+    .btn-primary { background: var(--gradient2); color: white; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255,77,90,0.35); }
+    .btn-secondary { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+    .btn-danger:hover { background: var(--danger); color: white; }
+    .btn-sm { padding: 6px 14px; font-size: 11px; }
+    .btn-icon { padding: 7px 10px; border-radius: 8px; }
+
+    /* ── CONTENT ──────────────────────────────────────── */
+    .content { padding: 28px 30px; flex: 1; }
+
+    /* ── TOAST ────────────────────────────────────────── */
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      background: var(--surface2); border: 1px solid var(--border);
+      padding: 13px 18px; border-radius: var(--radius);
+      font-size: 13px; min-width: 290px;
+      animation: slideIn 0.3s ease;
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 500;
+    }
+    .toast.success { border-color: var(--success); }
+    .toast.error { border-color: var(--danger); }
+    .toast.success::before { content: '✓'; color: var(--success); font-weight: bold; font-size: 15px; }
+    .toast.error::before { content: '✗'; color: var(--danger); font-weight: bold; font-size: 15px; }
+    @keyframes slideIn { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* ── CARDS ────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
+    }
+    .card-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; letter-spacing: 0.3px; }
+    .card-title .badge {
+      font-size: 10px; padding: 3px 9px; border-radius: 20px;
+      background: var(--gradient2); color: white; font-weight: 600;
+    }
+
+    /* ── FORM ELEMENTS ────────────────────────────────── */
+    .form-group { margin-bottom: 14px; }
+    .form-label {
+      display: block; font-size: 11px; color: var(--text2); margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;
+    }
+    .form-input, .form-textarea, .form-select {
+      width: 100%; padding: 10px 14px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text);
+      font-family: 'Montserrat', sans-serif; font-size: 13px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(255,77,90,0.15);
+    }
+    .form-textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+    .form-select { appearance: none; cursor: pointer; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    /* ── ITEM CARDS ───────────────────────────────────── */
+    .item-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 10px;
+    }
+    .item-card-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .item-card-title { font-size: 13px; font-weight: 700; }
+    .item-card-subtitle { font-size: 11px; color: var(--text2); margin-top: 3px; }
+    .item-card-actions { display: flex; gap: 5px; flex-shrink: 0; }
+
+    .position-controls { display: flex; gap: 4px; }
+    .pos-btn {
+      width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text2); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 13px;
+      transition: all 0.2s;
+    }
+    .pos-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(255,77,90,0.08); }
+
+    /* ── IMAGE UPLOAD ─────────────────────────────────── */
+    .image-upload-zone {
+      border: 2px dashed var(--border); border-radius: var(--radius);
+      padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s;
+      position: relative;
+    }
+    .image-upload-zone:hover { border-color: var(--accent); background: rgba(255,77,90,0.05); }
+    .image-upload-zone.uploading { border-color: var(--warning); pointer-events: none; }
+    .image-preview-thumb {
+      width: 80px; height: 80px; object-fit: cover; border-radius: 6px;
+      margin-bottom: 8px; display: none; border: 2px solid var(--border);
+    }
+    .upload-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.5; }
+    .upload-text { font-size: 12px; color: var(--text2); font-weight: 500; }
+    .upload-hint { font-size: 11px; color: var(--text2); margin-top: 5px; opacity: 0.7; }
+    .cloudinary-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(255,77,90,0.1); border: 1px solid rgba(255,77,90,0.3);
+      border-radius: 20px; padding: 3px 10px; font-size: 11px; color: var(--accent);
+      margin-top: 8px; font-weight: 600;
+    }
+    .upload-progress {
+      position: absolute; bottom: 0; left: 0; height: 3px;
+      background: var(--gradient2); border-radius: 0 0 6px 6px;
+      transition: width 0.3s; width: 0%;
+    }
+
+    /* ── BULLETS ──────────────────────────────────────── */
+    .bullet-list { }
+    .bullet-item { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
+    .bullet-item .form-input { flex: 1; }
+    .bullet-remove {
+      padding: 9px 10px; background: transparent; border: 1px solid var(--border);
+      border-radius: 6px; cursor: pointer; color: var(--danger); font-size: 13px; transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .bullet-remove:hover { background: var(--danger); color: white; border-color: var(--danger); }
+
+    /* ── TAGS ─────────────────────────────────────────── */
+    .tags-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+    .tag {
+      padding: 5px 12px; border-radius: 20px; font-size: 11px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text3); display: flex; align-items: center; gap: 5px; font-weight: 500;
+    }
+    .tag button { background: none; border: none; cursor: pointer; color: var(--danger); font-size: 14px; line-height: 1; }
+    .tag button:hover { color: #fff; }
+
+    /* ── LOADING ──────────────────────────────────────── */
+    .loading-screen {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; flex-direction: column; gap: 20px;
+    }
+    .spinner {
+      width: 44px; height: 44px; border: 3px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 12px; color: var(--text2); letter-spacing: 3px; text-transform: uppercase; font-weight: 600; }
+    .loading-logo { font-family: 'Abril Fatface', serif; font-size: 28px; color: var(--accent); }
+
+    /* ── PANEL PAGES ──────────────────────────────────── */
+    .panel-page { display: none; }
+    .panel-page.active { display: block; }
+
+    /* ── STATS ────────────────────────────────────────── */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px;
+      border-top: 3px solid var(--accent);
+    }
+    .stat-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; font-weight: 600; }
+    .stat-value { font-family: 'Abril Fatface', serif; font-size: 28px; color: var(--accent); }
+
+    /* ── SAVE BAR ─────────────────────────────────────── */
+    .save-bar {
+      position: sticky; bottom: 0; background: var(--surface);
+      border-top: 1px solid var(--border); padding: 16px 30px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .save-bar-info { font-size: 12px; color: var(--text2); font-weight: 500; }
+
+    /* ── MODAL ────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(2,11,22,0.85);
+      z-index: 1000; display: none; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 26px; width: 90%; max-width: 540px; max-height: 85vh; overflow-y: auto;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+    .modal-title { font-size: 16px; font-weight: 700; }
+    .modal-close { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 22px; line-height: 1; }
+    .modal-close:hover { color: var(--accent); }
+
+    /* ── DIVIDER ──────────────────────────────────────── */
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 16px 0; color: var(--text2); font-size: 11px; font-weight: 600;
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── IMG NOTE ─────────────────────────────────────── */
+    .img-note { font-size: 11px; color: var(--warning); margin-top: 5px; font-weight: 500; }
+    .img-preview-inline {
+      width: 100%; max-height: 100px; object-fit: cover;
+      border-radius: 6px; margin-top: 8px; display: none;
+      border: 1px solid var(--border);
+    }
+
+    /* ── SCROLLBAR ────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent2); }
+
+    /* ── GRADIENT TEXT ────────────────────────────────── */
+    .gradient-text {
+      background: var(--gradient2);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    /* ── INFO BOX ─────────────────────────────────────── */
+    .info-box {
+      background: rgba(255,77,90,0.08); border: 1px solid rgba(255,77,90,0.25);
+      border-radius: var(--radius); padding: 12px 16px;
+      font-size: 12px; color: var(--text3); line-height: 1.7;
+    }
+    .info-box strong { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-logo">RUTVEEK</div>
+  <div class="spinner"></div>
+  <div class="loading-text">Connecting to JSONBin...</div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>Admin Panel</h1>
+    <p>Portfolio CMS</p>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Pages</div>
+    <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+      <span class="icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('meta')" id="nav-meta">
+      <span class="icon">⚙️</span> Site Settings
+    </div>
+    <div class="nav-item" onclick="showPage('home')" id="nav-home">
+      <span class="icon">🏠</span> Home Page
+    </div>
+    <div class="nav-item" onclick="showPage('about')" id="nav-about">
+      <span class="icon">👤</span> About Me
+    </div>
+    <div class="nav-item" onclick="showPage('resume')" id="nav-resume">
+      <span class="icon">📄</span> Resume
+    </div>
+    <div class="nav-item" onclick="showPage('mywork')" id="nav-mywork">
+      <span class="icon">🔧</span> My Works
+    </div>
+    <div class="nav-item" onclick="showPage('achieve')" id="nav-achieve">
+      <span class="icon">🏆</span> Achievements
+    </div>
+    <div class="nav-section">Actions</div>
+    <div class="nav-item" onclick="loadFromJSONBin()">
+      <span class="icon">🔄</span> Reload Data
+    </div>
+    <div class="nav-item" onclick="saveAllData()">
+      <span class="icon">💾</span> Save All
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <span class="status-dot" id="statusDot"></span>
+    <span class="status-text" id="statusText">Connecting...</span>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <span class="topbar-title" id="pageTitle">Dashboard</span>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-secondary btn-sm" onclick="loadFromJSONBin()">↺ Reload</button>
+      <button class="btn btn-primary btn-sm" onclick="saveAllData()">💾 Save to JSONBin</button>
+    </div>
+  </div>
+
+  <div class="content" id="contentArea">
+
+    <!-- ══════════════ DASHBOARD ══════════════ -->
+    <div class="panel-page active" id="page-dashboard">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">Home Sections</div><div class="stat-value" id="stat-sections">-</div></div>
+        <div class="stat-card"><div class="stat-label">Experience</div><div class="stat-value" id="stat-exp">-</div></div>
+        <div class="stat-card"><div class="stat-label">Projects</div><div class="stat-value" id="stat-proj">-</div></div>
+        <div class="stat-card"><div class="stat-label">Achievements</div><div class="stat-value" id="stat-ach">-</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📡 System Status</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="info-box">
+            <strong>JSONBin</strong><br>
+            Bin ID: 69af208243b1c97be9c62319<br>
+            Status: <span id="jsonbinStatus">Checking...</span>
+          </div>
+          <div class="info-box">
+            <strong>Cloudinary</strong><br>
+            Cloud: <strong>dkbtav4nx</strong><br>
+            Preset: <strong>portfolio_upload</strong>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">🚀 How It Works</div></div>
+        <div class="info-box" style="line-height:2;">
+          • Navigate pages from the sidebar<br>
+          • Click <strong>📷</strong> on any image field → uploads to <strong>Cloudinary</strong> automatically<br>
+          • Use <strong>↑↓</strong> to reorder any list item<br>
+          • Press <strong>Enter</strong> to add Skills / Awards / Extracurriculars<br>
+          • Click <strong>Save to JSONBin</strong> → changes go live on your deployed site
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════ SITE SETTINGS ══════════════ -->
+    <div class="panel-page" id="page-meta">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🌐 Site Info</div></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Site Title</label>
+            <input class="form-input" id="meta_siteTitle" placeholder="RUTVEEK'S PORTFOLIO">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Owner Name</label>
+            <input class="form-input" id="meta_ownerName" placeholder="Rutveek Ingawale">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="meta_email" type="email" placeholder="your@email.com">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">🔗 Social Links</div></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Instagram</label>
+            <input class="form-input" id="meta_instagram" placeholder="https://instagram.com/...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">LinkedIn</label>
+            <input class="form-input" id="meta_linkedin" placeholder="https://linkedin.com/...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Twitter</label>
+            <input class="form-input" id="meta_twitter" placeholder="https://twitter.com/...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">GitHub</label>
+            <input class="form-input" id="meta_github" placeholder="https://github.com/...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Blog URL</label>
+            <input class="form-input" id="meta_blog" placeholder="https://your-blog.com">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════ HOME PAGE ══════════════ -->
+    <div class="panel-page" id="page-home">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🎯 Hero Section</div></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Title Line 1</label>
+            <input class="form-input" id="home_heroTitle1" placeholder="Rutveek">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Title Line 2</label>
+            <input class="form-input" id="home_heroTitle2" placeholder="Ingawale">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Subtitle</label>
+          <input class="form-input" id="home_heroSubtitle" placeholder="An Aerospace Enthusiast.">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📑 Sections <span class="badge" id="home-sections-count">0</span></div>
+          <button class="btn btn-secondary btn-sm" onclick="addHomeSection()">+ Add Section</button>
+        </div>
+        <div id="home-sections-list"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════ ABOUT PAGE ══════════════ -->
+    <div class="panel-page" id="page-about">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🎯 Hero</div></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Hero Title</label>
+            <input class="form-input" id="about_heroTitle" placeholder="About Me">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hero Subtitle</label>
+            <input class="form-input" id="about_heroSubtitle" placeholder="Passionate about...">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hero Image</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input class="form-input" id="about_heroImage" placeholder="Image URL">
+            <button class="btn btn-secondary btn-sm btn-icon" onclick="openImgModal('about_heroImage')">📷 Upload</button>
+          </div>
+          <img id="about_heroImage_preview" class="img-preview-inline">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">📄 Resume Button</div></div>
+        <div class="form-group">
+          <label class="form-label">Resume PDF Link</label>
+          <input class="form-input" id="about_resumeLink" placeholder="docs/resume.pdf or https://drive.google.com/...">
+          <div class="img-note">This is the link for the "Resume" button on the About page</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">👤 Who I Am</div></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Section Title</label>
+            <input class="form-input" id="about_whoTitle" placeholder="WHO I AM">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Name / Heading</label>
+            <input class="form-input" id="about_whoText" placeholder="Rutveek Ingawale">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bio Text</label>
+          <textarea class="form-textarea" id="about_whoBio" rows="5"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Profile Photo</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input class="form-input" id="about_profileImage" placeholder="Image URL">
+            <button class="btn btn-secondary btn-sm btn-icon" onclick="openImgModal('about_profileImage')">📷 Upload</button>
+          </div>
+          <img id="about_profileImage_preview" class="img-preview-inline">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">❤️ Passions <span class="badge" id="about-passions-count">0</span></div>
+          <button class="btn btn-secondary btn-sm" onclick="addPassion()">+ Add</button>
+        </div>
+        <div id="about-passions-list"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════ RESUME PAGE ══════════════ -->
+    <div class="panel-page" id="page-resume">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🎯 Hero</div></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Title</label>
+            <input class="form-input" id="resume_heroTitle">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subtitle</label>
+            <input class="form-input" id="resume_heroSubtitle">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hero Image</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input class="form-input" id="resume_heroImage">
+            <button class="btn btn-secondary btn-sm btn-icon" onclick="openImgModal('resume_heroImage')">📷 Upload</button>
+          </div>
+          <img id="resume_heroImage_preview" class="img-preview-inline">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🎓 Education <span class="badge" id="edu-count">0</span></div>
+          <button class="btn btn-secondary btn-sm" onclick="addEducation()">+ Add</button>
+        </div>
+        <div id="education-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💼 Work Experience <span class="badge" id="exp-count">0</span></div>
+          <button class="btn btn-secondary btn-sm" onclick="addExperience()">+ Add</button>
+        </div>
+        <div id="experience-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">🛠️ Skills</div></div>
+        <div class="form-group">
+          <label class="form-label">Add Skill (press Enter)</label>
+          <input class="form-input" id="skills-input" placeholder="e.g. CATIA-V5 Design" onkeydown="addSkillTag(event)">
+        </div>
+        <div class="tags-row" id="skills-tags"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🏛️ Involvements <span class="badge" id="inv-count">0</span></div>
+          <button class="btn btn-secondary btn-sm" onclick="addInvolvement()">+ Add</button>
+        </div>
+        <div id="involvement-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">🥇 Awards</div></div>
+        <div class="form-group">
+          <label class="form-label">Add Award (press Enter)</label>
+          <input class="form-input" id="awards-input" placeholder="e.g. CBSE National Merit Scholar" onkeydown="addAwardTag(event)">
+        </div>
+        <div class="tags-row" id="awards-tags"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">🎯 Extracurriculars</div></div>
+        <div class="form-group">
+          <label class="form-label">Add Activity (press Enter)</label>
+          <input class="form-input" id="extra-input" placeholder="e.g. Head Boy of School" onkeydown="addExtraTag(event)">
+        </div>
+        <div class="tags-row" id="extra-tags"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════ MY WORK PAGE ══════════════ -->
+    <div class="panel-page" id="page-mywork">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🎯 Hero</div></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Title</label>
+            <input class="form-input" id="mywork_heroTitle">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subtitle</label>
+            <input class="form-input" id="mywork_heroSubtitle">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hero Image</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input class="form-input" id="mywork_heroImage">
+            <button class="btn btn-secondary btn-sm btn-icon" onclick="openImgModal('mywork_heroImage')">📷 Upload</button>
+          </div>
+          <img id="mywork_heroImage_preview" class="img-preview-inline">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📰 Research Publications <span class="badge" id="pub-count">0</span></div>
+          <button class="btn btn-secondary btn-sm" onclick="addPublication()">+ Add</button>
+        </div>
+        <div id="publications-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⚙️ Projects <span class="badge" id="proj-count">0</span></div>
+          <button class="btn btn-secondary btn-sm" onclick="addProject()">+ Add</button>
+        </div>
+        <div id="projects-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🎨 CAD Designs <span class="badge" id="cad-count">0</span></div>
+          <button class="btn btn-secondary btn-sm" onclick="addCAD()">+ Add</button>
+        </div>
+        <div id="cad-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🎬 Videos <span class="badge" id="vid-count">0</span></div>
+          <button class="btn btn-secondary btn-sm" onclick="addVideo()">+ Add</button>
+        </div>
+        <div id="videos-list"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════ ACHIEVEMENTS ══════════════ -->
+    <div class="panel-page" id="page-achieve">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🎯 Hero</div></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Title</label>
+            <input class="form-input" id="achieve_heroTitle">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subtitle</label>
+            <input class="form-input" id="achieve_heroSubtitle">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hero Image</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input class="form-input" id="achieve_heroImage">
+            <button class="btn btn-secondary btn-sm btn-icon" onclick="openImgModal('achieve_heroImage')">📷 Upload</button>
+          </div>
+          <img id="achieve_heroImage_preview" class="img-preview-inline">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🏆 Achievement Items <span class="badge" id="ach-count">0</span></div>
+          <button class="btn btn-secondary btn-sm" onclick="addAchievement()">+ Add</button>
+        </div>
+        <div id="achievements-list"></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <div class="save-bar">
+    <div class="save-bar-info" id="lastSaved">Last saved: Never</div>
+    <button class="btn btn-primary" onclick="saveAllData()">💾 Save All Changes to JSONBin</button>
+  </div>
+</div>
+
+<!-- ══════════════ IMAGE UPLOAD MODAL ══════════════ -->
+<div class="modal-overlay" id="imgModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📷 Upload Image</div>
+      <button class="modal-close" onclick="closeImgModal()">×</button>
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <label class="form-label">Upload from device → saved to Cloudinary</label>
+      <input type="file" id="imgFileInput" accept="image/*" style="display:none" onchange="uploadToCloudinary(event)">
+      <div class="image-upload-zone" id="uploadZone" onclick="document.getElementById('imgFileInput').click()">
+        <div class="upload-progress" id="uploadProgress"></div>
+        <img id="imgPreview" class="image-preview-thumb">
+        <div class="upload-icon" id="uploadIcon">☁️</div>
+        <div class="upload-text" id="uploadText">Click to choose a file</div>
+        <div class="upload-hint">JPG, PNG, WEBP — uploaded to Cloudinary</div>
+        <div class="cloudinary-badge">☁️ Cloudinary · portfolio folder</div>
+      </div>
+      <div id="uploadedUrl" style="margin-top:10px;display:none;">
+        <label class="form-label">Uploaded URL</label>
+        <input class="form-input" id="cloudinaryResultUrl" readonly>
+      </div>
+    </div>
+
+    <div class="divider">or</div>
+
+    <div style="margin-bottom:18px;">
+      <label class="form-label">Paste an image URL directly</label>
+      <input class="form-input" id="imgUrlInput" placeholder="https://example.com/image.jpg" oninput="previewFromUrl(this.value)">
+      <img id="urlPreview" style="width:100%;max-height:80px;object-fit:cover;border-radius:6px;margin-top:8px;display:none;border:1px solid var(--border);">
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeImgModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmImage()">✓ Use This Image</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════
+const JSONBIN_BIN_ID  = '69af208243b1c97be9c62319';
+const JSONBIN_API_KEY = '$2a$10$fuZdyhBsUL1u1Co9cqt1kOY3XP.3iFVh9VlXMiB.dBggb1QobBj2q';
+const JSONBIN_URL     = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
+const CLOUDINARY_CLOUD  = 'dkbtav4nx';
+const CLOUDINARY_PRESET = 'portfolio_upload';
+const CLOUDINARY_URL    = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`;
+
+let portfolioData   = null;
+let currentImgTarget = null;
+let cloudinaryUrl   = null;
+
+// ═══════════════════════════════════════════════════════
+// JSONBIN
+// ═══════════════════════════════════════════════════════
+async function loadFromJSONBin() {
+  showLoading(true);
+  try {
+    const res  = await fetch(JSONBIN_URL + '/latest', { headers: { 'X-Master-Key': JSONBIN_API_KEY } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    portfolioData = json.record;
+    // ensure nested objects exist
+    portfolioData.meta    = portfolioData.meta    || {};
+    portfolioData.home    = portfolioData.home    || {};
+    portfolioData.about   = portfolioData.about   || {};
+    portfolioData.resume  = portfolioData.resume  || {};
+    portfolioData.mywork  = portfolioData.mywork  || {};
+    portfolioData.achieve = portfolioData.achieve || {};
+    setStatus(true);
+    renderAll();
+    updateStats();
+    showToast('Data loaded from JSONBin', 'success');
+  } catch (e) {
+    setStatus(false);
+    showToast('Failed to load: ' + e.message, 'error');
+  }
+  showLoading(false);
+}
+
+async function saveAllData() {
+  collectAll();
+  try {
+    const res = await fetch(JSONBIN_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY },
+      body: JSON.stringify(portfolioData)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    document.getElementById('lastSaved').textContent = 'Last saved: ' + new Date().toLocaleTimeString();
+    showToast('Saved to JSONBin successfully!', 'success');
+    updateStats();
+  } catch (e) {
+    showToast('Save failed: ' + e.message, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// CLOUDINARY UPLOAD
+// ═══════════════════════════════════════════════════════
+async function uploadToCloudinary(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const zone     = document.getElementById('uploadZone');
+  const icon     = document.getElementById('uploadIcon');
+  const text     = document.getElementById('uploadText');
+  const progress = document.getElementById('uploadProgress');
+  const preview  = document.getElementById('imgPreview');
+
+  zone.classList.add('uploading');
+  icon.textContent = '⏳';
+  text.textContent = 'Uploading to Cloudinary...';
+  progress.style.width = '30%';
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_PRESET);
+    formData.append('folder', 'portfolio');
+
+    progress.style.width = '60%';
+
+    const res  = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error.message);
+
+    cloudinaryUrl = data.secure_url;
+    progress.style.width = '100%';
+
+    // Show preview
+    preview.src = cloudinaryUrl;
+    preview.style.display = 'block';
+    icon.textContent = '✅';
+    text.textContent = 'Upload complete!';
+
+    // Show URL
+    document.getElementById('uploadedUrl').style.display = 'block';
+    document.getElementById('cloudinaryResultUrl').value = cloudinaryUrl;
+
+    showToast('Image uploaded to Cloudinary!', 'success');
+  } catch (err) {
+    icon.textContent = '❌';
+    text.textContent = 'Upload failed: ' + err.message;
+    showToast('Cloudinary upload failed: ' + err.message, 'error');
+  } finally {
+    zone.classList.remove('uploading');
+    setTimeout(() => { progress.style.width = '0%'; }, 1000);
+  }
+}
+
+function previewFromUrl(url) {
+  const preview = document.getElementById('urlPreview');
+  if (url && (url.startsWith('http') || url.startsWith('data:'))) {
+    preview.src = url;
+    preview.style.display = 'block';
+    preview.onerror = () => { preview.style.display = 'none'; };
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// IMAGE MODAL
+// ═══════════════════════════════════════════════════════
+function openImgModal(targetInputId) {
+  currentImgTarget = targetInputId;
+  cloudinaryUrl    = null;
+
+  // Reset modal
+  document.getElementById('imgPreview').style.display = 'none';
+  document.getElementById('imgPreview').src = '';
+  document.getElementById('uploadIcon').textContent = '☁️';
+  document.getElementById('uploadText').textContent = 'Click to choose a file';
+  document.getElementById('uploadedUrl').style.display = 'none';
+  document.getElementById('cloudinaryResultUrl').value = '';
+  document.getElementById('imgFileInput').value = '';
+  document.getElementById('imgUrlInput').value = '';
+  document.getElementById('urlPreview').style.display = 'none';
+  document.getElementById('uploadProgress').style.width = '0%';
+  document.getElementById('uploadZone').classList.remove('uploading');
+
+  document.getElementById('imgModal').classList.add('open');
+}
+
+function closeImgModal() {
+  document.getElementById('imgModal').classList.remove('open');
+  currentImgTarget = null;
+}
+
+function confirmImage() {
+  const urlInput = document.getElementById('imgUrlInput').value.trim();
+  const finalUrl = cloudinaryUrl || urlInput;
+
+  if (!finalUrl) { showToast('Please upload an image or enter a URL', 'error'); return; }
+
+  // Set value in target input
+  const targetInput = document.getElementById(currentImgTarget);
+  if (targetInput) {
+    targetInput.value = finalUrl;
+    // Also show inline preview if available
+    const previewId = currentImgTarget + '_preview';
+    const previewEl = document.getElementById(previewId);
+    if (previewEl) {
+      previewEl.src = finalUrl;
+      previewEl.style.display = 'block';
+    }
+  }
+
+  closeImgModal();
+  showToast('Image URL set successfully', 'success');
+}
+
+// Show inline preview when user types directly in an image input
+function setupInlinePreviews() {
+  const imageInputIds = [
+    'about_heroImage','about_profileImage',
+    'resume_heroImage','mywork_heroImage',
+    'achieve_heroImage'
+  ];
+  imageInputIds.forEach(function(id) {
+    const input = document.getElementById(id);
+    if (!input) return;
+    input.addEventListener('input', function() {
+      const prev = document.getElementById(id + '_preview');
+      if (prev && this.value) {
+        prev.src = this.value;
+        prev.style.display = 'block';
+        prev.onerror = function() { prev.style.display = 'none'; };
+      }
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// COLLECT ALL
+// ═══════════════════════════════════════════════════════
+function collectAll() {
+  portfolioData.meta.siteTitle   = v('meta_siteTitle');
+  portfolioData.meta.ownerName   = v('meta_ownerName');
+  portfolioData.meta.email       = v('meta_email');
+  portfolioData.meta.instagram   = v('meta_instagram');
+  portfolioData.meta.linkedin    = v('meta_linkedin');
+  portfolioData.meta.twitter     = v('meta_twitter');
+  portfolioData.meta.github      = v('meta_github');
+  portfolioData.meta.blog        = v('meta_blog');
+
+  portfolioData.home.heroTitle1  = v('home_heroTitle1');
+  portfolioData.home.heroTitle2  = v('home_heroTitle2');
+  portfolioData.home.heroSubtitle= v('home_heroSubtitle');
+  portfolioData.home.sections    = collectHomeSections();
+
+  portfolioData.about.heroTitle     = v('about_heroTitle');
+  portfolioData.about.heroSubtitle  = v('about_heroSubtitle');
+  portfolioData.about.heroImage     = v('about_heroImage');
+  portfolioData.about.resumeLink    = v('about_resumeLink');
+  portfolioData.about.whoTitle      = v('about_whoTitle');
+  portfolioData.about.whoText       = v('about_whoText');
+  portfolioData.about.whoBio        = v('about_whoBio');
+  portfolioData.about.profileImage  = v('about_profileImage');
+  portfolioData.about.passions      = collectPassions();
+
+  portfolioData.resume.heroTitle    = v('resume_heroTitle');
+  portfolioData.resume.heroSubtitle = v('resume_heroSubtitle');
+  portfolioData.resume.heroImage    = v('resume_heroImage');
+  portfolioData.resume.education    = collectEducation();
+  portfolioData.resume.experience   = collectExperience();
+  portfolioData.resume.skills       = collectTags('skills');
+  portfolioData.resume.involvement  = collectInvolvement();
+  portfolioData.resume.awards       = collectTags('awards');
+  portfolioData.resume.extracurricular = collectTags('extra');
+
+  portfolioData.mywork.heroTitle    = v('mywork_heroTitle');
+  portfolioData.mywork.heroSubtitle = v('mywork_heroSubtitle');
+  portfolioData.mywork.heroImage    = v('mywork_heroImage');
+  portfolioData.mywork.publications = collectPublications();
+  portfolioData.mywork.projects     = collectProjects();
+  portfolioData.mywork.cadDesigns   = collectCAD();
+  portfolioData.mywork.videos       = collectVideos();
+
+  portfolioData.achieve.heroTitle   = v('achieve_heroTitle');
+  portfolioData.achieve.heroSubtitle= v('achieve_heroSubtitle');
+  portfolioData.achieve.heroImage   = v('achieve_heroImage');
+  portfolioData.achieve.items       = collectAchievements();
+}
+
+function v(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+
+// ═══════════════════════════════════════════════════════
+// RENDER ALL
+// ═══════════════════════════════════════════════════════
+function renderAll() {
+  const d = portfolioData;
+
+  setVal('meta_siteTitle', d.meta.siteTitle);
+  setVal('meta_ownerName', d.meta.ownerName);
+  setVal('meta_email',     d.meta.email);
+  setVal('meta_instagram', d.meta.instagram);
+  setVal('meta_linkedin',  d.meta.linkedin);
+  setVal('meta_twitter',   d.meta.twitter);
+  setVal('meta_github',    d.meta.github);
+  setVal('meta_blog',      d.meta.blog);
+
+  setVal('home_heroTitle1',   d.home.heroTitle1);
+  setVal('home_heroTitle2',   d.home.heroTitle2);
+  setVal('home_heroSubtitle', d.home.heroSubtitle);
+  renderHomeSections(d.home.sections || []);
+
+  setVal('about_heroTitle',    d.about.heroTitle);
+  setVal('about_heroSubtitle', d.about.heroSubtitle);
+  setValAndPreview('about_heroImage',    d.about.heroImage);
+  setVal('about_resumeLink',   d.about.resumeLink || 'docs/resume.pdf');
+  setVal('about_whoTitle',     d.about.whoTitle);
+  setVal('about_whoText',      d.about.whoText);
+  setVal('about_whoBio',       d.about.whoBio);
+  setValAndPreview('about_profileImage', d.about.profileImage);
+  renderPassions(d.about.passions || []);
+
+  setVal('resume_heroTitle',    d.resume.heroTitle);
+  setVal('resume_heroSubtitle', d.resume.heroSubtitle);
+  setValAndPreview('resume_heroImage', d.resume.heroImage);
+  renderEducation(d.resume.education   || []);
+  renderExperience(d.resume.experience || []);
+  renderTags('skills', d.resume.skills || []);
+  renderInvolvement(d.resume.involvement || []);
+  renderTags('awards', d.resume.awards || []);
+  renderTags('extra',  d.resume.extracurricular || []);
+
+  setVal('mywork_heroTitle',    d.mywork.heroTitle);
+  setVal('mywork_heroSubtitle', d.mywork.heroSubtitle);
+  setValAndPreview('mywork_heroImage', d.mywork.heroImage);
+  renderPublications(d.mywork.publications || []);
+  renderProjects(d.mywork.projects     || []);
+  renderCAD(d.mywork.cadDesigns        || []);
+  renderVideos(d.mywork.videos         || []);
+
+  setVal('achieve_heroTitle',    d.achieve.heroTitle);
+  setVal('achieve_heroSubtitle', d.achieve.heroSubtitle);
+  setValAndPreview('achieve_heroImage', d.achieve.heroImage);
+  renderAchievements(d.achieve.items   || []);
+}
+
+function setVal(id, val) { const el = document.getElementById(id); if (el) el.value = val || ''; }
+function setValAndPreview(id, val) {
+  setVal(id, val);
+  if (!val) return;
+  const prev = document.getElementById(id + '_preview');
+  if (prev) { prev.src = val; prev.style.display = 'block'; }
+}
+
+// ═══════════════════════════════════════════════════════
+// HOME SECTIONS
+// ═══════════════════════════════════════════════════════
+function renderHomeSections(sections) {
+  const c = document.getElementById('home-sections-list');
+  c.innerHTML = '';
+  sections.forEach((s, i) => c.appendChild(makeHomeSectionCard(s, i, sections.length)));
+  document.getElementById('home-sections-count').textContent = sections.length;
+}
+
+function makeHomeSectionCard(sec, i, total) {
+  const div = document.createElement('div');
+  div.className = 'item-card';
+  div.innerHTML = `
+    <div class="item-card-header">
+      <div>
+        <div class="item-card-title">${sec.title || 'Section ' + (i+1)}</div>
+        <div class="item-card-subtitle">anchor: #${sec.anchor || '?'}</div>
+      </div>
+      <div class="item-card-actions">
+        <div class="position-controls">
+          ${i > 0       ? `<button class="pos-btn" onclick="moveHomeSection(${i},'up')">↑</button>` : ''}
+          ${i < total-1 ? `<button class="pos-btn" onclick="moveHomeSection(${i},'down')">↓</button>` : ''}
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="removeHomeSection(${i})">✕</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Title</label>
+        <input class="form-input" data-field="title" value="${esc(sec.title)}">
+      </div>
+      <div class="form-group"><label class="form-label">Anchor ID</label>
+        <input class="form-input" data-field="anchor" value="${esc(sec.anchor)}">
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Subtitle (HTML ok)</label>
+      <input class="form-input" data-field="subtitle" value="${esc(sec.subtitle)}">
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Link / URL</label>
+        <input class="form-input" data-field="link" value="${esc(sec.link)}">
+      </div>
+      <div class="form-group"><label class="form-label">Image</label>
+        <div style="display:flex;gap:6px;">
+          <input class="form-input" data-field="image" value="${esc(sec.image)}" id="hs_img_${i}">
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="openImgModal('hs_img_${i}')">📷</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">External Link?</label>
+      <select class="form-select" data-field="isExternal">
+        <option value="false" ${!sec.isExternal ? 'selected':''}>No (internal page)</option>
+        <option value="true"  ${sec.isExternal  ? 'selected':''}>Yes (external URL)</option>
+      </select>
+    </div>`;
+  return div;
+}
+
+function collectHomeSections() {
+  return Array.from(document.querySelectorAll('#home-sections-list .item-card')).map((card, i) => ({
+    id: 'sec_'+i,
+    title:      card.querySelector('[data-field="title"]').value,
+    anchor:     card.querySelector('[data-field="anchor"]').value,
+    subtitle:   card.querySelector('[data-field="subtitle"]').value,
+    link:       card.querySelector('[data-field="link"]').value,
+    image:      card.querySelector('[data-field="image"]').value,
+    isExternal: card.querySelector('[data-field="isExternal"]').value === 'true'
+  }));
+}
+
+function addHomeSection() {
+  const sections = collectHomeSections();
+  sections.push({ id:'sec_new', title:'New Section', anchor:'new', subtitle:'', link:'./', image:'', isExternal:false });
+  portfolioData.home.sections = sections; renderHomeSections(sections);
+}
+function removeHomeSection(i) {
+  const s = collectHomeSections(); s.splice(i,1);
+  portfolioData.home.sections = s; renderHomeSections(s);
+}
+function moveHomeSection(i, dir) {
+  const s = collectHomeSections(); const j = dir==='up' ? i-1 : i+1;
+  [s[i],s[j]] = [s[j],s[i]];
+  portfolioData.home.sections = s; renderHomeSections(s);
+}
+
+// ═══════════════════════════════════════════════════════
+// ABOUT — PASSIONS
+// ═══════════════════════════════════════════════════════
+function renderPassions(passions) {
+  const c = document.getElementById('about-passions-list');
+  c.innerHTML = '';
+  passions.forEach((p, i) => c.appendChild(makePassionCard(p, i, passions.length)));
+  document.getElementById('about-passions-count').textContent = passions.length;
+}
+function makePassionCard(p, i, total) {
+  const div = document.createElement('div');
+  div.className = 'item-card';
+  div.innerHTML = `
+    <div class="item-card-header">
+      <div class="item-card-title">${esc(p.title) || 'Passion'}</div>
+      <div class="item-card-actions">
+        <div class="position-controls">
+          ${i > 0       ? `<button class="pos-btn" onclick="movePassion(${i},'up')">↑</button>` : ''}
+          ${i < total-1 ? `<button class="pos-btn" onclick="movePassion(${i},'down')">↓</button>` : ''}
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="removePassion(${i})">✕</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Title</label>
+        <input class="form-input" data-field="title" value="${esc(p.title)}">
+      </div>
+      <div class="form-group"><label class="form-label">Icon / Image</label>
+        <div style="display:flex;gap:6px;">
+          <input class="form-input" data-field="icon" value="${esc(p.icon)}" id="pi_${i}">
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="openImgModal('pi_${i}')">📷</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label>
+      <textarea class="form-textarea" data-field="text" rows="3">${esc(p.text)}</textarea>
+    </div>`;
+  return div;
+}
+function collectPassions() {
+  return Array.from(document.querySelectorAll('#about-passions-list .item-card')).map((card, i) => ({
+    id: 'passion_'+i,
+    title: card.querySelector('[data-field="title"]').value,
+    icon:  card.querySelector('[data-field="icon"]').value,
+    text:  card.querySelector('[data-field="text"]').value
+  }));
+}
+function addPassion() {
+  const p = collectPassions(); p.push({id:'passion_new',title:'New Passion',icon:'',text:''});
+  portfolioData.about.passions = p; renderPassions(p);
+}
+function removePassion(i) {
+  const p = collectPassions(); p.splice(i,1); portfolioData.about.passions = p; renderPassions(p);
+}
+function movePassion(i, dir) {
+  const p = collectPassions(); const j = dir==='up'?i-1:i+1; [p[i],p[j]]=[p[j],p[i]];
+  portfolioData.about.passions = p; renderPassions(p);
+}
+
+// ═══════════════════════════════════════════════════════
+// RESUME — EDUCATION
+// ═══════════════════════════════════════════════════════
+function renderEducation(edu) {
+  const c = document.getElementById('education-list');
+  c.innerHTML = '';
+  edu.forEach((e, i) => c.appendChild(makeEduCard(e, i, edu.length)));
+  document.getElementById('edu-count').textContent = edu.length;
+}
+function makeEduCard(e, i, total) {
+  const div = document.createElement('div');
+  div.className = 'item-card';
+  div.innerHTML = `
+    <div class="item-card-header">
+      <div>
+        <div class="item-card-title">${esc(e.institution)||'Institution'}</div>
+        <div class="item-card-subtitle">${esc(e.degree)}</div>
+      </div>
+      <div class="item-card-actions">
+        <div class="position-controls">
+          ${i>0?`<button class="pos-btn" onclick="moveEdu(${i},'up')">↑</button>`:''}
+          ${i<total-1?`<button class="pos-btn" onclick="moveEdu(${i},'down')">↓</button>`:''}
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="removeEdu(${i})">✕</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Institution</label>
+        <input class="form-input" data-field="institution" value="${esc(e.institution)}">
+      </div>
+      <div class="form-group"><label class="form-label">Location</label>
+        <input class="form-input" data-field="location" value="${esc(e.location)}">
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Degree</label>
+      <input class="form-input" data-field="degree" value="${esc(e.degree)}">
+    </div>
+    <div class="form-row-3">
+      <div class="form-group"><label class="form-label">Minors</label>
+        <input class="form-input" data-field="minors" value="${esc(e.minors)}">
+      </div>
+      <div class="form-group"><label class="form-label">Years</label>
+        <input class="form-input" data-field="years" value="${esc(e.years)}">
+      </div>
+      <div class="form-group"><label class="form-label">GPA</label>
+        <input class="form-input" data-field="gpa" value="${esc(e.gpa)}">
+      </div>
+    </div>`;
+  return div;
+}
+function collectEducation() {
+  return Array.from(document.querySelectorAll('#education-list .item-card')).map((card,i)=>({
+    id:'edu_'+i, institution:card.querySelector('[data-field="institution"]').value,
+    location:card.querySelector('[data-field="location"]').value,
+    degree:card.querySelector('[data-field="degree"]').value,
+    minors:card.querySelector('[data-field="minors"]').value,
+    years:card.querySelector('[data-field="years"]').value,
+    gpa:card.querySelector('[data-field="gpa"]').value
+  }));
+}
+function addEducation() {
+  const edu=collectEducation(); edu.push({id:'edu_new',institution:'',location:'',degree:'',minors:'',years:'',gpa:''});
+  portfolioData.resume.education=edu; renderEducation(edu);
+}
+function removeEdu(i){const e=collectEducation();e.splice(i,1);portfolioData.resume.education=e;renderEducation(e);}
+function moveEdu(i,dir){const e=collectEducation();const j=dir==='up'?i-1:i+1;[e[i],e[j]]=[e[j],e[i]];portfolioData.resume.education=e;renderEducation(e);}
+
+// ═══════════════════════════════════════════════════════
+// RESUME — EXPERIENCE
+// ═══════════════════════════════════════════════════════
+function renderExperience(exp) {
+  const c = document.getElementById('experience-list');
+  c.innerHTML = '';
+  exp.forEach((e, i) => c.appendChild(makeExpCard(e, i, exp.length)));
+  document.getElementById('exp-count').textContent = exp.length;
+}
+function makeExpCard(e, i, total) {
+  const div = document.createElement('div');
+  div.className = 'item-card';
+  const bulletsHtml = (e.bullets||[]).map((b,bi)=>`
+    <div class="bullet-item">
+      <input class="form-input" data-bullet="${bi}" value="${esc(b)}">
+      <button class="bullet-remove" onclick="removeBullet(this)">✕</button>
+    </div>`).join('');
+  div.innerHTML = `
+    <div class="item-card-header">
+      <div>
+        <div class="item-card-title">${esc(e.company)||'Company'}</div>
+        <div class="item-card-subtitle">${esc(e.role)} · ${esc(e.period)}</div>
+      </div>
+      <div class="item-card-actions">
+        <div class="position-controls">
+          ${i>0?`<button class="pos-btn" onclick="moveExp(${i},'up')">↑</button>`:''}
+          ${i<total-1?`<button class="pos-btn" onclick="moveExp(${i},'down')">↓</button>`:''}
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="removeExp(${i})">✕</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Company</label>
+        <input class="form-input" data-field="company" value="${esc(e.company)}">
+      </div>
+      <div class="form-group"><label class="form-label">Role</label>
+        <input class="form-input" data-field="role" value="${esc(e.role)}">
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Period</label>
+      <input class="form-input" data-field="period" value="${esc(e.period)}">
+    </div>
+    <div class="form-group"><label class="form-label">Bullet Points</label>
+      <div class="bullet-list" data-bullets>${bulletsHtml}</div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addBullet(this)">+ Add Bullet</button>
+    </div>`;
+  return div;
+}
+function addBullet(btn){
+  const list=btn.previousElementSibling;
+  const div=document.createElement('div'); div.className='bullet-item';
+  div.innerHTML=`<input class="form-input" data-bullet="${list.children.length}" value=""><button class="bullet-remove" onclick="removeBullet(this)">✕</button>`;
+  list.appendChild(div);
+}
+function removeBullet(btn){btn.parentElement.remove();}
+function collectBulletsFromCard(card){return Array.from(card.querySelectorAll('[data-bullet]')).map(i=>i.value).filter(b=>b.trim());}
+function collectExperience(){
+  return Array.from(document.querySelectorAll('#experience-list .item-card')).map((card,i)=>({
+    id:'exp_'+i, company:card.querySelector('[data-field="company"]').value,
+    role:card.querySelector('[data-field="role"]').value,
+    period:card.querySelector('[data-field="period"]').value,
+    bullets:collectBulletsFromCard(card)
+  }));
+}
+function addExperience(){const e=collectExperience();e.push({id:'exp_new',company:'',role:'',period:'',bullets:[]});portfolioData.resume.experience=e;renderExperience(e);}
+function removeExp(i){const e=collectExperience();e.splice(i,1);portfolioData.resume.experience=e;renderExperience(e);}
+function moveExp(i,dir){const e=collectExperience();const j=dir==='up'?i-1:i+1;[e[i],e[j]]=[e[j],e[i]];portfolioData.resume.experience=e;renderExperience(e);}
+
+// ═══════════════════════════════════════════════════════
+// RESUME — INVOLVEMENT
+// ═══════════════════════════════════════════════════════
+function renderInvolvement(inv){
+  const c=document.getElementById('involvement-list');c.innerHTML='';
+  inv.forEach((item,i)=>c.appendChild(makeInvCard(item,i,inv.length)));
+  document.getElementById('inv-count').textContent=inv.length;
+}
+function makeInvCard(item,i,total){
+  const div=document.createElement('div');div.className='item-card';
+  div.innerHTML=`
+    <div class="item-card-header">
+      <div class="item-card-title">${esc(item.org)||'Organization'}</div>
+      <div class="item-card-actions">
+        <div class="position-controls">
+          ${i>0?`<button class="pos-btn" onclick="moveInv(${i},'up')">↑</button>`:''}
+          ${i<total-1?`<button class="pos-btn" onclick="moveInv(${i},'down')">↓</button>`:''}
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="removeInv(${i})">✕</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Organization</label>
+        <input class="form-input" data-field="org" value="${esc(item.org)}">
+      </div>
+      <div class="form-group"><label class="form-label">Role</label>
+        <input class="form-input" data-field="role" value="${esc(item.role)}">
+      </div>
+    </div>`;
+  return div;
+}
+function collectInvolvement(){return Array.from(document.querySelectorAll('#involvement-list .item-card')).map((card,i)=>({id:'inv_'+i,org:card.querySelector('[data-field="org"]').value,role:card.querySelector('[data-field="role"]').value}));}
+function addInvolvement(){const inv=collectInvolvement();inv.push({id:'inv_new',org:'',role:''});portfolioData.resume.involvement=inv;renderInvolvement(inv);}
+function removeInv(i){const inv=collectInvolvement();inv.splice(i,1);portfolioData.resume.involvement=inv;renderInvolvement(inv);}
+function moveInv(i,dir){const inv=collectInvolvement();const j=dir==='up'?i-1:i+1;[inv[i],inv[j]]=[inv[j],inv[i]];portfolioData.resume.involvement=inv;renderInvolvement(inv);}
+
+// ═══════════════════════════════════════════════════════
+// TAGS
+// ═══════════════════════════════════════════════════════
+function renderTags(prefix,arr){
+  const c=document.getElementById(prefix+'-tags');c.innerHTML='';
+  arr.forEach(tag=>addTagEl(c,tag,prefix));
+}
+function addTagEl(container,text,prefix){
+  const span=document.createElement('span');span.className='tag';span.dataset.val=text;
+  span.innerHTML=`${esc(text)} <button onclick="removeTag(this,'${prefix}')">×</button>`;
+  container.appendChild(span);
+}
+function removeTag(btn){btn.parentElement.remove();}
+function collectTags(prefix){return Array.from(document.querySelectorAll('#'+prefix+'-tags .tag')).map(t=>t.dataset.val);}
+function addSkillTag(e){if(e.key==='Enter'){const i=document.getElementById('skills-input');const v=i.value.trim();if(v){addTagEl(document.getElementById('skills-tags'),v,'skills');i.value='';}}}
+function addAwardTag(e){if(e.key==='Enter'){const i=document.getElementById('awards-input');const v=i.value.trim();if(v){addTagEl(document.getElementById('awards-tags'),v,'awards');i.value='';}}}
+function addExtraTag(e){if(e.key==='Enter'){const i=document.getElementById('extra-input');const v=i.value.trim();if(v){addTagEl(document.getElementById('extra-tags'),v,'extra');i.value='';}}}
+
+// ═══════════════════════════════════════════════════════
+// MY WORK — PUBLICATIONS
+// ═══════════════════════════════════════════════════════
+function renderPublications(pubs){
+  const c=document.getElementById('publications-list');c.innerHTML='';
+  pubs.forEach((p,i)=>c.appendChild(makePubCard(p,i,pubs.length)));
+  document.getElementById('pub-count').textContent=pubs.length;
+}
+function makePubCard(p,i,total){
+  const div=document.createElement('div');div.className='item-card';
+  div.innerHTML=`
+    <div class="item-card-header">
+      <div class="item-card-title">${esc(p.title)||'Publication'}</div>
+      <div class="item-card-actions">
+        <div class="position-controls">
+          ${i>0?`<button class="pos-btn" onclick="movePub(${i},'up')">↑</button>`:''}
+          ${i<total-1?`<button class="pos-btn" onclick="movePub(${i},'down')">↓</button>`:''}
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="removePub(${i})">✕</button>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Title</label><input class="form-input" data-field="title" value="${esc(p.title)}"></div>
+    <div class="form-group"><label class="form-label">Authors</label><input class="form-input" data-field="authors" value="${esc(p.authors)}"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Summary / Session</label><input class="form-input" data-field="summary" value="${esc(p.summary)}"></div>
+      <div class="form-group"><label class="form-label">Date Published</label><input class="form-input" data-field="date" value="${esc(p.date)}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Abstract</label><textarea class="form-textarea" data-field="details" rows="4">${esc(p.details)}</textarea></div>
+    <div class="form-group"><label class="form-label">DOI / Link</label><input class="form-input" data-field="link" value="${esc(p.link)}"></div>`;
+  return div;
+}
+function collectPublications(){return Array.from(document.querySelectorAll('#publications-list .item-card')).map((card,i)=>({id:'pub_'+i,title:card.querySelector('[data-field="title"]').value,authors:card.querySelector('[data-field="authors"]').value,summary:card.querySelector('[data-field="summary"]').value,date:card.querySelector('[data-field="date"]').value,details:card.querySelector('[data-field="details"]').value,link:card.querySelector('[data-field="link"]').value}));}
+function addPublication(){const p=collectPublications();p.push({title:'',authors:'',summary:'',date:'',details:'',link:''});portfolioData.mywork.publications=p;renderPublications(p);}
+function removePub(i){const p=collectPublications();p.splice(i,1);portfolioData.mywork.publications=p;renderPublications(p);}
+function movePub(i,dir){const p=collectPublications();const j=dir==='up'?i-1:i+1;[p[i],p[j]]=[p[j],p[i]];portfolioData.mywork.publications=p;renderPublications(p);}
+
+// ═══════════════════════════════════════════════════════
+// MY WORK — PROJECTS
+// ═══════════════════════════════════════════════════════
+function renderProjects(projs){
+  const c=document.getElementById('projects-list');c.innerHTML='';
+  projs.forEach((p,i)=>c.appendChild(makeProjCard(p,i,projs.length)));
+  document.getElementById('proj-count').textContent=projs.length;
+}
+function makeProjCard(p,i,total){
+  const div=document.createElement('div');div.className='item-card';
+  const bh=(p.bullets||[]).map((b,bi)=>`<div class="bullet-item"><input class="form-input" data-bullet="${bi}" value="${esc(b)}"><button class="bullet-remove" onclick="removeBullet(this)">✕</button></div>`).join('');
+  div.innerHTML=`
+    <div class="item-card-header">
+      <div class="item-card-title">${esc(p.name)||'Project'}</div>
+      <div class="item-card-actions">
+        <div class="position-controls">
+          ${i>0?`<button class="pos-btn" onclick="moveProj(${i},'up')">↑</button>`:''}
+          ${i<total-1?`<button class="pos-btn" onclick="moveProj(${i},'down')">↓</button>`:''}
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="removeProj(${i})">✕</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Project Name</label><input class="form-input" data-field="name" value="${esc(p.name)}"></div>
+      <div class="form-group"><label class="form-label">Role</label><input class="form-input" data-field="role" value="${esc(p.role)}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Period</label><input class="form-input" data-field="period" value="${esc(p.period)}"></div>
+    <div class="form-group"><label class="form-label">Bullets</label>
+      <div class="bullet-list" data-bullets>${bh}</div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addBullet(this)">+ Add Bullet</button>
+    </div>`;
+  return div;
+}
+function collectProjects(){return Array.from(document.querySelectorAll('#projects-list .item-card')).map((card,i)=>({id:'proj_'+i,name:card.querySelector('[data-field="name"]').value,role:card.querySelector('[data-field="role"]').value,period:card.querySelector('[data-field="period"]').value,bullets:collectBulletsFromCard(card)}));}
+function addProject(){const p=collectProjects();p.push({name:'',role:'',period:'',bullets:[]});portfolioData.mywork.projects=p;renderProjects(p);}
+function removeProj(i){const p=collectProjects();p.splice(i,1);portfolioData.mywork.projects=p;renderProjects(p);}
+function moveProj(i,dir){const p=collectProjects();const j=dir==='up'?i-1:i+1;[p[i],p[j]]=[p[j],p[i]];portfolioData.mywork.projects=p;renderProjects(p);}
+
+// ═══════════════════════════════════════════════════════
+// MY WORK — CAD DESIGNS
+// ═══════════════════════════════════════════════════════
+function renderCAD(cads){
+  const c=document.getElementById('cad-list');c.innerHTML='';
+  cads.forEach((item,i)=>c.appendChild(makeCADCard(item,i,cads.length)));
+  document.getElementById('cad-count').textContent=cads.length;
+}
+function makeCADCard(item,i,total){
+  const div=document.createElement('div');div.className='item-card';
+  div.innerHTML=`
+    <div class="item-card-header">
+      <div class="item-card-title">${esc(item.title)||'CAD Design'}</div>
+      <div class="item-card-actions">
+        <div class="position-controls">
+          ${i>0?`<button class="pos-btn" onclick="moveCAD(${i},'up')">↑</button>`:''}
+          ${i<total-1?`<button class="pos-btn" onclick="moveCAD(${i},'down')">↓</button>`:''}
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="removeCAD(${i})">✕</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Title</label><input class="form-input" data-field="title" value="${esc(item.title)}"></div>
+      <div class="form-group"><label class="form-label">Image</label>
+        <div style="display:flex;gap:6px;">
+          <input class="form-input" data-field="image" value="${esc(item.image)}" id="cad_img_${i}">
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="openImgModal('cad_img_${i}')">📷</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label>
+      <textarea class="form-textarea" data-field="description" rows="2">${esc(item.description)}</textarea>
+    </div>`;
+  return div;
+}
+function collectCAD(){return Array.from(document.querySelectorAll('#cad-list .item-card')).map((card,i)=>({id:'cad_'+i,title:card.querySelector('[data-field="title"]').value,image:card.querySelector('[data-field="image"]').value,description:card.querySelector('[data-field="description"]').value}));}
+function addCAD(){const c=collectCAD();c.push({title:'',image:'',description:''});portfolioData.mywork.cadDesigns=c;renderCAD(c);}
+function removeCAD(i){const c=collectCAD();c.splice(i,1);portfolioData.mywork.cadDesigns=c;renderCAD(c);}
+function moveCAD(i,dir){const c=collectCAD();const j=dir==='up'?i-1:i+1;[c[i],c[j]]=[c[j],c[i]];portfolioData.mywork.cadDesigns=c;renderCAD(c);}
+
+// ═══════════════════════════════════════════════════════
+// MY WORK — VIDEOS
+// ═══════════════════════════════════════════════════════
+function renderVideos(videos){
+  const c=document.getElementById('videos-list');c.innerHTML='';
+  videos.forEach((v,i)=>c.appendChild(makeVideoCard(v,i,videos.length)));
+  document.getElementById('vid-count').textContent=videos.length;
+}
+function makeVideoCard(v,i,total){
+  const div=document.createElement('div');div.className='item-card';
+  div.innerHTML=`
+    <div class="item-card-header">
+      <div class="item-card-title">${esc(v.title)||'Video'}</div>
+      <div class="item-card-actions">
+        <div class="position-controls">
+          ${i>0?`<button class="pos-btn" onclick="moveVideo(${i},'up')">↑</button>`:''}
+          ${i<total-1?`<button class="pos-btn" onclick="moveVideo(${i},'down')">↓</button>`:''}
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="removeVideo(${i})">✕</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Title</label><input class="form-input" data-field="title" value="${esc(v.title)}"></div>
+      <div class="form-group"><label class="form-label">YouTube URL</label><input class="form-input" data-field="url" value="${esc(v.url)}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Thumbnail</label>
+      <div style="display:flex;gap:6px;">
+        <input class="form-input" data-field="thumbnail" value="${esc(v.thumbnail)}" id="vid_thumb_${i}">
+        <button class="btn btn-secondary btn-sm btn-icon" onclick="openImgModal('vid_thumb_${i}')">📷</button>
+      </div>
+    </div>`;
+  return div;
+}
+function collectVideos(){return Array.from(document.querySelectorAll('#videos-list .item-card')).map((card,i)=>({id:'vid_'+i,title:card.querySelector('[data-field="title"]').value,url:card.querySelector('[data-field="url"]').value,thumbnail:card.querySelector('[data-field="thumbnail"]').value}));}
+function addVideo(){const v=collectVideos();v.push({title:'',url:'',thumbnail:''});portfolioData.mywork.videos=v;renderVideos(v);}
+function removeVideo(i){const v=collectVideos();v.splice(i,1);portfolioData.mywork.videos=v;renderVideos(v);}
+function moveVideo(i,dir){const v=collectVideos();const j=dir==='up'?i-1:i+1;[v[i],v[j]]=[v[j],v[i]];portfolioData.mywork.videos=v;renderVideos(v);}
+
+// ═══════════════════════════════════════════════════════
+// ACHIEVEMENTS
+// ═══════════════════════════════════════════════════════
+function renderAchievements(items){
+  const c=document.getElementById('achievements-list');c.innerHTML='';
+  items.forEach((item,i)=>c.appendChild(makeAchCard(item,i,items.length)));
+  document.getElementById('ach-count').textContent=items.length;
+}
+function makeAchCard(item,i,total){
+  const div=document.createElement('div');div.className='item-card';
+  div.innerHTML=`
+    <div class="item-card-header">
+      <div>
+        <div class="item-card-title">${esc(item.title)||'Achievement'} ${item.title2?'— '+esc(item.title2):''}</div>
+        <div class="item-card-subtitle">#${item.number||String(i+1).padStart(2,'0')}</div>
+      </div>
+      <div class="item-card-actions">
+        <div class="position-controls">
+          ${i>0?`<button class="pos-btn" onclick="moveAch(${i},'up')">↑</button>`:''}
+          ${i<total-1?`<button class="pos-btn" onclick="moveAch(${i},'down')">↓</button>`:''}
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="removeAch(${i})">✕</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Title Line 1</label><input class="form-input" data-field="title" value="${esc(item.title)}"></div>
+      <div class="form-group"><label class="form-label">Title Line 2</label><input class="form-input" data-field="title2" value="${esc(item.title2)}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label>
+      <textarea class="form-textarea" data-field="text" rows="4">${esc(item.text)}</textarea>
+    </div>
+    <div class="form-group"><label class="form-label">Image</label>
+      <div style="display:flex;gap:6px;">
+        <input class="form-input" data-field="image" value="${esc(item.image)}" id="ach_img_${i}">
+        <button class="btn btn-secondary btn-sm btn-icon" onclick="openImgModal('ach_img_${i}')">📷</button>
+      </div>
+    </div>`;
+  return div;
+}
+function collectAchievements(){return Array.from(document.querySelectorAll('#achievements-list .item-card')).map((card,i)=>({id:'ach_'+i,number:String(i+1).padStart(2,'0'),title:card.querySelector('[data-field="title"]').value,title2:card.querySelector('[data-field="title2"]').value,text:card.querySelector('[data-field="text"]').value,image:card.querySelector('[data-field="image"]').value}));}
+function addAchievement(){const a=collectAchievements();a.push({title:'',title2:'',text:'',image:''});portfolioData.achieve.items=a;renderAchievements(a);}
+function removeAch(i){const a=collectAchievements();a.splice(i,1);portfolioData.achieve.items=a;renderAchievements(a);}
+function moveAch(i,dir){const a=collectAchievements();const j=dir==='up'?i-1:i+1;[a[i],a[j]]=[a[j],a[i]];portfolioData.achieve.items=a;renderAchievements(a);}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+const pageTitles = {dashboard:'Dashboard',meta:'Site Settings',home:'Home Page',about:'About Me',resume:'Resume',mywork:'My Works',achieve:'Achievements'};
+function showPage(page) {
+  document.querySelectorAll('.panel-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  const nav = document.getElementById('nav-'+page);
+  if (nav) nav.classList.add('active');
+  document.getElementById('pageTitle').textContent = pageTitles[page] || page;
+}
+
+// ═══════════════════════════════════════════════════════
+// STATS & UI
+// ═══════════════════════════════════════════════════════
+function updateStats() {
+  if (!portfolioData) return;
+  document.getElementById('stat-sections').textContent = portfolioData.home?.sections?.length  || 0;
+  document.getElementById('stat-exp').textContent      = portfolioData.resume?.experience?.length || 0;
+  document.getElementById('stat-proj').textContent     = portfolioData.mywork?.projects?.length   || 0;
+  document.getElementById('stat-ach').textContent      = portfolioData.achieve?.items?.length     || 0;
+}
+
+function showLoading(show) {
+  document.getElementById('loadingScreen').style.display = show ? 'flex' : 'none';
+}
+
+function setStatus(ok) {
+  const dot  = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  const stat = document.getElementById('jsonbinStatus');
+  dot.className   = 'status-dot ' + (ok ? 'connected' : 'error');
+  text.textContent = ok ? 'JSONBin Connected' : 'Connection Error';
+  if (stat) stat.textContent = ok ? '🟢 Connected' : '🔴 Error';
+}
+
+function showToast(msg, type='success') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  showLoading(true);
+  loadFromJSONBin();
+  setupInlinePreviews();
+});
+</script>
+</body>
+</html>

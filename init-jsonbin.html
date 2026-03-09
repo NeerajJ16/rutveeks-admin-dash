@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Initialize JSONBin Data</title>
+  <style>
+    body { font-family: monospace; background: #0a0a0f; color: #e8e8f0; padding: 20px; }
+    pre { background: #12121a; padding: 16px; border-radius: 8px; font-size: 12px; overflow-x: auto; }
+    button { background: #6c63ff; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+    .status { margin-top: 12px; padding: 10px; border-radius: 8px; }
+    .success { background: #0f3320; color: #4ade80; }
+    .error { background: #330f0f; color: #f87171; }
+  </style>
+</head>
+<body>
+<h2>Initialize JSONBin with Full Portfolio Data</h2>
+<p>Click below to push the complete enriched data structure to JSONBin.</p>
+<button onclick="pushData()">🚀 Push Full Data to JSONBin</button>
+<div id="status"></div>
+<pre id="output"></pre>
+
+<script>
+const JSONBIN_BIN_ID  = '69af208243b1c97be9c62319';
+const JSONBIN_API_KEY = '$2a$10$fuZdyhBsUL1u1Co9cqt1kOY3XP.3iFVh9VlXMiB.dBggb1QobBj2q';
+
+const FULL_DATA = {
+  "meta": {
+    "siteTitle": "RUTVEEK'S PORTFOLIO",
+    "ownerName": "Rutveek Ingawale",
+    "email": "ingawale15rutveek@gmail.com",
+    "instagram": "https://www.instagram.com/rutveeeek._/",
+    "linkedin": "https://www.linkedin.com/in/rutveek-ingawale-263143207/",
+    "twitter": "https://twitter.com/",
+    "github": "https://github.com/",
+    "blog": "https://dev-rutveek15.pantheonsite.io/"
+  },
+  "home": {
+    "heroTitle1": "Rutveek",
+    "heroTitle2": "Ingawale",
+    "heroSubtitle": "An Aerospace \\n Enthusiast.",
+    "sections": [
+      { "id": "about", "title": "About Me", "subtitle": "Engineering Graphics Tutor,<br> Peer Mentor,<br> Creative Designer", "link": "./about.html", "anchor": "about", "image": "images/abou.png", "isExternal": false },
+      { "id": "resume", "title": "Resume", "subtitle": "Scholastic Dive", "link": "./resume.html", "anchor": "resume", "image": "images/20421.jpg", "isExternal": false },
+      { "id": "reile", "title": "My Works", "subtitle": "Projects, Designs and<br> Researches", "link": "./mywork.html", "anchor": "reile", "image": "images/about.jpg", "isExternal": false },
+      { "id": "achieve", "title": "Achievements", "subtitle": "Awards, Participations<br> and More", "link": "./achieve.html", "anchor": "achieve", "image": "images/tophy.webp", "isExternal": false },
+      { "id": "blogs", "title": "My Blogs", "subtitle": "The Writing<br> Journey", "link": "https://dev-rutveek15.pantheonsite.io/", "anchor": "blogs", "image": "images/pic1.png", "isExternal": true }
+    ]
+  },
+  "about": {
+    "heroTitle": "About Me",
+    "heroSubtitle": "Passionate about 3D CAD designing",
+    "heroImage": "images/abou.png",
+    "whoTitle": "WHO I AM",
+    "whoText": "Rutveek Ingawale",
+    "whoBio": "Hello, My name is Rutveek Ingawale, and I am an aspiring Aerospace engineer from Embry-riddle Aeronautical University, USA. I am a highly motivated individual with a passion for technology and an eagerness to learn and grow in my field. Aside from my academic pursuits, I have a variety of interests that keep me engaged and fulfilled. In my free time, I enjoy cooking and experimenting with different cuisines, as well as exploring new cultures and meeting new people. While my primary focus is on my career in technology, I have a creative side as well. I often find myself drawn to variety of sketches. I like to make something that has multiple perspectives. I do like to attend MUNs and even programs that educate people and spread awareness about the rivers and help to maintain them. Passionate about solving problems in a creative way. I have always wanted to devote myself to new developments in space technology.",
+    "profileImage": "images/about/profilepic.jpg",
+    "passions": [
+      { "id": "passion_design", "title": "DESIGN", "icon": "images/about/design-skills.svg", "text": "During my free time, I always love to draw various kinds of sketches. As my interest in sketching grew, I began to experiment with other auto cad designs and 3D ideas, including satellite and drone designs." },
+      { "id": "passion_tech", "title": "TECHNOLOGY", "icon": "images/about/tech.svg", "text": "I enjoy math and physics and enjoy participating in projects involving Emerging Technologies, Education, Space, Sustainability, Economic Development, and Entrepreneurship. I'm also interested in artificial intelligence, mathematics, statistics, space, and robotics." }
+    ]
+  },
+  "resume": {
+    "heroTitle": "My Resume",
+    "heroSubtitle": "A sneak peak to my Journey.",
+    "heroImage": "images/20421.jpg",
+    "education": [
+      { "id": "edu_erau", "institution": "Embry Riddle Aeronautical University", "location": "Daytona Beach, Florida, USA", "degree": "Bachelor of Science in Aerospace Engineering", "minors": "CAD manufacturing, Applied Mathematics", "years": "2023 - 2027", "gpa": "3.9" }
+    ],
+    "experience": [
+      { "id": "exp_novineer", "company": "Novineer, INC", "role": "Engineering Design Intern", "period": "June 2024 - Present", "bullets": ["Designed and optimized mechanical parts using CATIA and SOLIDWORKS, ensuring efficient performance through stress analysis and optimization techniques, increasing the strength to weight ratio up to 64%.", "Created detailed technical documentation and supported product testing by conducting virtual simulations and analyzing mechanical integrity under various load conditions."] },
+      { "id": "exp_tutor", "company": "ERAU Academic Advancement Center", "role": "Engineering Tutor (CATIA & MATLAB)", "period": "January 2024 - Present", "bullets": ["Recognized for my commitment to excellence as a CRLA certified engineering tutor, providing guidance and supportive learning environment to empower students in mastering complex concepts, enhancing their proficiency in technical drafting and design principles.", "Helped students improve their technical drafting and programming skills by offering practical examples and real-world applications of course content."] },
+      { "id": "exp_ta", "company": "ERAU Engineering Fundamentals", "role": "Teaching Assistant for Graphical Designing (CATIA)", "period": "January 2024 - Present", "bullets": ["Guided students through complex 3D modeling assignments in CATIA, promoting the connection between theoretical concepts and practical applications.", "Assisted the professor in grading 103 students, offering detailed feedback to enhance student learning and improve their design accuracy.", "Organized and led review sessions for 4 different sections, ensuring students were well-prepared for assessments and project submissions."] },
+      { "id": "exp_mentor", "company": "ERAU Center of Faith and Spirituality", "role": "UNIV 195A Mentor", "period": "January 2024 - December 2024", "bullets": ["Mentor for Professional Development class, leading and teaching a class focusing on student development and helping them transition to a professional environment and providing a supportive environment to help students excel in academics."] },
+      { "id": "exp_aiaa", "company": "AIAA Design, Build, and Fly", "role": "Design Engineer", "period": "August 2023 - April 2024", "bullets": ["Designed and built payload structures for unmanned aircraft systems (UAS), improving weight distribution and stability through innovative interlocking mechanisms.", "Analyzed structural performance under flight conditions, adjusting design parameters to meet competition requirements for weight and durability.", "Actively participated in design reviews, presenting design concepts and modifications to team members and faculty advisors."] },
+      { "id": "exp_it", "company": "ERAU IT Services", "role": "Dispatcher", "period": "October 2023 - Present", "bullets": ["Efficiently coordinated and processed over 75 IT service requests per week, ensuring prompt and effective responses and assistance.", "Managed front desk operations and handled inventory of equipment, ensuring timely support and delivery for seamless IT support."] }
+    ],
+    "skills": ["CATIA-V5 Design", "MATLAB", "AutoCAD", "Solidworks", "Graphic Designing", "Python", "MySQL", "Microsoft Office Suite", "Data Management", "Organization and Prioritization", "Leadership and Communication", "Editing and Typing", "Creativity and Research"],
+    "involvement": [
+      { "id": "inv_sga", "org": "Embry Riddle Student Government Association", "role": "College of Engineering Senator" },
+      { "id": "inv_sase", "org": "Society of Asian Scientists and Engineers (SASE)", "role": "Professional Development Chair" },
+      { "id": "inv_maker", "org": "Markerspace Lab | ERAU", "role": "Design Engineer" },
+      { "id": "inv_iss", "org": "International Student Services", "role": "International Student Ambassador" },
+      { "id": "inv_cso", "org": "Career Services Office", "role": "Career Services Office Student Ambassador" },
+      { "id": "inv_sikh", "org": "Embry-Riddle Sikh Student Association", "role": "Public Relations Officer" },
+      { "id": "inv_iso", "org": "International Student Organization", "role": "Public-Relations Officer" },
+      { "id": "inv_disc", "org": "Discover Scholars", "role": "First Generation Student" },
+      { "id": "inv_dbf", "org": "Design, Build, Fly AIAA Club", "role": "Design Engineer and Manufacturing Member" }
+    ],
+    "awards": ["CBSE National Merit Scholar (Math) 2020", "SOF Zonal Excellence Award 2022 (IMO)", "SOF Distinction Award 2021 & 2022 (NSO)", "Government Merit Scholarship of 40,000 rupees", "YTBC Top 100 Excellence Award", "Unified Council Gold Medalist 2020 (UIMO)", "MUN Special Mention Award in Vivek Model UN", "Antarashtriya Charcha Excellence Award"],
+    "extracurricular": ["Head Boy of School", "Teaching (as a home tutor)", "Business Pitch activity", "Delegate at VMUN conference"]
+  },
+  "mywork": {
+    "heroTitle": "My Work",
+    "heroSubtitle": "Some more of Me!",
+    "heroImage": "images/about.jpg",
+    "publications": [
+      {
+        "id": "pub_1",
+        "title": "Sensor for Human Motion Monitoring Utilizing Tough, Self-Healing, Polyurethane Elastomer",
+        "authors": "Foram Madiyar, Rutveek Ingawale, Natalie Brattain, Forrest Dohner, Rishikesh Srinivasaraghavan Govindarajan, Ashley Lunt, Jenny B. Vu and Isabella McDonald",
+        "summary": "AIAA 2025-1028 · Session: Sensors, Instrumentation and Applications I",
+        "date": "Published: 3 January, 2025",
+        "details": "Flexible strain sensors have made significant progress, but challenges remain in developing sensors that combine robust self-healing capability, adhesive properties, and recyclability. This study presents a novel self-healing polyurea-based elastomer synthesized from bis(aminopropyl) terminated polydimethylsiloxane (PDMS) and a mixture of aromatic and aliphatic diisocyanates. Applications include detecting human motion and facial expressions, human-machine interaction, and electronic skin technologies.",
+        "link": "https://doi.org/10.2514/6.2025-1028"
+      }
+    ],
+    "projects": [
+      { "id": "proj_1", "name": "MATLAB project", "role": "Design Engineer", "period": "Jan 2024 - Present", "bullets": ["Programmed a MATLAB interactive program, helping tutoring labs to generate schedule for tutors.", "Modified by manipulating with conditions and made an effective schedule for tutors in various labs across the center."] },
+      { "id": "proj_2", "name": "CATIA-V5 Lego set project", "role": "Design Engineer", "period": "Aug 2023 - Dec 2023", "bullets": ["Designed a Shark Lego set which contains 230 pieces using Reference elements, Base, Dress-up, and Transformation features. Also used assembly module and tools to assemble parts.", "Modified by manipulating the constraints to move and created an animation where the assemblies move in one degree of freedom."] },
+      { "id": "proj_3", "name": "Launch Vehicle project", "role": "Team Lead and Cognizant Engineer", "period": "Aug 2023 - Dec 2023", "bullets": ["Designed a 2 staged solid fueled launch vehicle weighing 345000 pounds and is reaching 150nmi with 4500 pounds of payload. Designed the structure of the vehicle and managing the team with milestones."] },
+      { "id": "proj_4", "name": "New York Academy of Sciences", "role": "Team lead and Research Member", "period": "Sept 2021 - Feb 2022", "bullets": ["Developed a method to convert green algal water into uncontaminated blue water and then use the harmful algal waste to make bioplastics. Used 3D AutoCAD to make models of satellite and drone."] }
+    ],
+    "cadDesigns": [
+      { "id": "cad_1", "title": "Drone", "image": "images/work/design1.webp", "description": "3D CAD drone design created in CATIA-V5." },
+      { "id": "cad_2", "title": "Satellite", "image": "images/work/design2.webp", "description": "3D CAD satellite design created in CATIA-V5." }
+    ],
+    "videos": [
+      { "id": "vid_1", "title": "Video 1", "url": "https://youtu.be/eVa_aIa-RsE", "thumbnail": "images/1.png" },
+      { "id": "vid_2", "title": "Video 2", "url": "https://youtu.be/qsaRokW5GFY", "thumbnail": "images/2.png" },
+      { "id": "vid_3", "title": "Video 3", "url": "https://youtu.be/tspa_4YR3cw", "thumbnail": "images/3.png" },
+      { "id": "vid_4", "title": "Video 4", "url": "https://youtu.be/7GLgG_z2rrY", "thumbnail": "images/4.png" }
+    ]
+  },
+  "achieve": {
+    "heroTitle": "Achievements",
+    "heroSubtitle": "",
+    "heroImage": "images/tophy.webp",
+    "items": [
+      { "id": "ach_1", "number": "01", "title": "Tutor of", "title2": "the Month", "text": "I am incredibly honored to be selected as the Tutor of the Month at the Academic Advancement Center at Embry-Riddle Aeronautical University. This recognition means a lot to me, as it reflects the appreciation and positive feedback from the students I have had the privilege to work with. Teaching is more than just a job for me; it's a passion.", "image": "images/achieve/2.jpg" },
+      { "id": "ach_2", "number": "02", "title": "Leadership", "title2": "Conference", "text": "What does it take to become a leader? Nothing extraordinary, yes, that's right. Every individual is a leader in one way or the other. Attending the Florida International leadership conference over the span of 3 days included enjoyment, learning, and bonding. I would like to thank International Student Services at Embry-Riddle for all the initiatives they take for international students.", "image": "images/achieve/1.jpg" },
+      { "id": "ach_3", "number": "03", "title": "CRLA", "title2": "Certified Tutor", "text": "Beginning the semester, in January 2024, I started my tutoring journey at Embry-Riddle Aeronautical University. 3D Computer Aided Designs (CAD) being one of my strong pillars, I decided to help and encourage others in the field of CAD modelling. I am pleased to announce that I am a CRLA certified tutor with a Level 1 certification.", "image": "images/achieve/3.jpg" },
+      { "id": "ach_4", "number": "04", "title": "Mechanical Engineer", "title2": "Dassault Systems", "text": "I received the title of 'Mechanical Designer' by DassaultSystems. I successfully completed both of the certification examinations. In the month of March, I accomplished Part design and Assembly design certifications, by achieving 155/155 and 150/155 respectively.", "image": "" }
+    ]
+  }
+};
+
+async function pushData() {
+  const statusEl = document.getElementById('status');
+  const outputEl = document.getElementById('output');
+  statusEl.className = 'status';
+  statusEl.textContent = 'Pushing data...';
+
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': JSONBIN_API_KEY
+      },
+      body: JSON.stringify(FULL_DATA)
+    });
+    const json = await res.json();
+    if (res.ok) {
+      statusEl.className = 'status success';
+      statusEl.textContent = '✅ Successfully pushed to JSONBin! Your portfolio pages will now load this data.';
+      outputEl.textContent = JSON.stringify(json, null, 2);
+    } else {
+      throw new Error(JSON.stringify(json));
+    }
+  } catch(e) {
+    statusEl.className = 'status error';
+    statusEl.textContent = '❌ Error: ' + e.message;
+  }
+}
+</script>
+</body>
+</html>
