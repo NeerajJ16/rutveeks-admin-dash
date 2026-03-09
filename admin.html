@@ -889,33 +889,48 @@ let cloudinaryUrl   = null;
 // JSONBIN
 // ═══════════════════════════════════════════════════════
 async function loadFromJSONBin() {
+
   showLoading(true);
+
   try {
+
     const res = await fetch(
-  JSONBIN_URL + '/latest?t=' + Date.now(),
-  {
-    headers: { 'X-Master-Key': JSONBIN_API_KEY },
-    cache: "no-store"
-  }
-);
+      JSONBIN_URL + '/latest?cb=' + Date.now(),
+      {
+        method: "GET",
+        headers: {
+          "X-Master-Key": JSONBIN_API_KEY,
+          "Cache-Control": "no-cache"
+        },
+        cache: "no-store"
+      }
+    );
+
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
     const json = await res.json();
+
     portfolioData = json.record;
-    // ensure nested objects exist
+
     portfolioData.meta    = portfolioData.meta    || {};
     portfolioData.home    = portfolioData.home    || {};
     portfolioData.about   = portfolioData.about   || {};
     portfolioData.resume  = portfolioData.resume  || {};
     portfolioData.mywork  = portfolioData.mywork  || {};
     portfolioData.achieve = portfolioData.achieve || {};
+
     setStatus(true);
     renderAll();
     updateStats();
     showToast('Data loaded from JSONBin', 'success');
+
   } catch (e) {
+
     setStatus(false);
     showToast('Failed to load: ' + e.message, 'error');
+
   }
+
   showLoading(false);
 }
 
@@ -1841,6 +1856,9 @@ document.getElementById("loginScreen").style.display="flex"
 document.getElementById("adminPassword").value=""
 
 }
+  window.onload = () => {
+  loadFromJSONBin();
+};
 </script>
 </body>
 </html>
