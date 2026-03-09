@@ -1,60 +1,39 @@
 /**
- * portfolio-loader.js
- * ─────────────────────────────────────────────────────────────────────────────
- * Universal data loader for Rutveek's Portfolio.
- * ALL pages must include this script and call PortfolioLoader.init(pageName, callback).
+ * portfolio-loader.js — fixed version
  *
- * ── WHAT WAS BROKEN (and why it only happened on Vercel/Netlify not localhost) ──
+ * ROOT CAUSE: Barba.js (PJAX) doesn't re-execute inline <script> tags when
+ * navigating between pages, so PortfolioLoader.init() only ever ran on the
+ * first hard load. On Vercel/Netlify this was visible immediately; on
+ * localhost the fast dev server masked it.
  *
- * BUG 1 — fetch() responses were being cached by the CDN and browser.
- *   Vercel and Netlify serve through edge CDN nodes. Without an explicit cache
- *   directive, fetch() lets the browser and CDN cache the JSONBin response.
- *   On first hard refresh the fresh data arrives. On subsequent visits (or after
- *   Barba navigation) the stale cached response is returned — data looks blank.
- *   On localhost there is no CDN layer so every request always hits JSONBin.
- *   FIX: Add `cache: 'no-store'` to the fetch options.
+ * IMPORTANT: resume.html, mywork.html, achieve.html all intentionally share
+ * data-namespace="about" because common.js only has animation handlers for
+ * "top" and "about". Do NOT change those namespaces.
  *
- * BUG 2 — Barba.js (PJAX) does not re-execute inline <script> tags.
- *   common.js uses Barba.js for client-side page transitions. When you navigate,
- *   Barba fetches the next page HTML, swaps the .barba-container div, and fires
- *   lifecycle events — but it never re-runs <script> tags inside the container.
- *   So PortfolioLoader.init() runs once on hard load but never again. On
- *   localhost the fast local response hides the blank flash; on production the
- *   page stays empty until a hard refresh.
- *   FIX: Register each page's init callback in a map. Use a MutationObserver on
- *   #barba-wrapper to detect when Barba injects a new .barba-container, read its
- *   data-namespace, and re-run the matching callback automatically. No changes
- *   needed in any HTML file.
- * ─────────────────────────────────────────────────────────────────────────────
+ * FIX: Instead of matching by namespace, we detect the current page from
+ * window.location.pathname and re-run the right callback on every Barba
+ * navigation. We watch document.body (which IS #barba-wrapper) for the new
+ * .barba-container being appended, then look up the right callback by URL.
+ *
+ * ALSO FIXED: Added cache: 'no-store' so Vercel/Netlify CDN edge nodes don't
+ * serve stale cached JSONBin responses.
  */
 
 const PortfolioLoader = (() => {
 
-  // ── CONFIG ────────────────────────────────────────────────────────────────
   const JSONBIN_BIN_ID  = '69af208243b1c97be9c62319';
   const JSONBIN_API_KEY = '$2a$10$fuZdyhBsUL1u1Co9cqt1kOY3XP.3iFVh9VlXMiB.dBggb1QobBj2q';
   const JSONBIN_URL     = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`;
 
-  // Maps page name passed to init() → Barba data-namespace value in HTML
-  const PAGE_NAMESPACE = {
-    home    : 'top',
-    about   : 'about',
-    resume  : 'resume',
-    mywork  : 'mywork',
-    achieve : 'achieve',
-  };
-
-  // Registered callbacks keyed by Barba namespace
+  // All registered callbacks keyed by page name
   const _registry = {};
 
-  // ── NL2BR ─────────────────────────────────────────────────────────────────
   function nl2br(str) {
     if (!str) return '';
     return String(str).replace(/\\n/g, '<br>');
   }
 
-  // ── FETCH ─────────────────────────────────────────────────────────────────
-  // BUG 1 FIX: cache: 'no-store' bypasses both browser cache and CDN edge cache.
+  // cache: 'no-store' prevents browser and CDN from caching the response
   async function fetchData() {
     const res = await fetch(JSONBIN_URL, {
       headers : { 'X-Master-Key': JSONBIN_API_KEY },
@@ -65,10 +44,8 @@ const PortfolioLoader = (() => {
     return json.record;
   }
 
-  // ── META ──────────────────────────────────────────────────────────────────
   function applyMeta(data) {
     const m = data.meta || {};
-
     if (m.siteTitle) document.title = document.title || m.siteTitle;
 
     document.querySelectorAll('#js_topBack, .ly_header_title a').forEach(el => {
@@ -94,16 +71,24 @@ const PortfolioLoader = (() => {
     });
   }
 
-  // ── RUN FOR NAMESPACE ─────────────────────────────────────────────────────
-  async function _runForNamespace(namespace) {
-    const cb = _registry[namespace];
+  // Derive page name from a URL path string
+  function _pageFromPath(path) {
+    if (path.includes('resume'))  return 'resume';
+    if (path.includes('mywork'))  return 'mywork';
+    if (path.includes('achieve')) return 'achieve';
+    if (path.includes('about'))   return 'about';
+    return 'home';
+  }
+
+  async function _runForPage(page) {
+    const cb = _registry[page];
     if (typeof cb !== 'function') return;
     try {
       const data = await fetchData();
       applyMeta(data);
       cb(data);
     } catch (err) {
-      console.error('[PortfolioLoader] Error for namespace:', namespace, err);
+      console.error('[PortfolioLoader] Error:', err);
       _showError();
     }
   }
@@ -117,51 +102,29 @@ const PortfolioLoader = (() => {
     document.body && document.body.prepend(b);
   }
 
-  // ── BARBA OBSERVER (BUG 2 FIX) ───────────────────────────────────────────
-  // Barba.js swaps page content by inserting a new .barba-container into
-  // #barba-wrapper. We watch for that insertion and re-run the right callback.
-  // This works without touching common.js or any HTML file.
-  function _setupBarbaObserver() {
-    const attach = () => {
-      const wrapper = document.getElementById('barba-wrapper');
-      if (!wrapper) return false;
-
-      new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-          for (const node of mutation.addedNodes) {
-            if (
-              node.nodeType === 1 &&
-              node.classList &&
-              node.classList.contains('barba-container')
-            ) {
-              const ns = node.getAttribute('data-namespace');
-              if (ns) _runForNamespace(ns);
-            }
-          }
+  // Watch for Barba appending a new .barba-container into <body>.
+  // When it does, detect the page from the current URL and re-run that callback.
+  new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (
+          node.nodeType === 1 &&
+          node.classList &&
+          node.classList.contains('barba-container')
+        ) {
+          // By the time the container is inserted, location.pathname
+          // has already been updated by Barba's history.pushState
+          const page = _pageFromPath(window.location.pathname);
+          _runForPage(page);
         }
-      }).observe(wrapper, { childList: true });
-
-      return true;
-    };
-
-    // #barba-wrapper is in <body> so it exists by the time this inline script
-    // runs (portfolio-loader.js is loaded at bottom of body). But if somehow
-    // it's not ready, fall back to DOMContentLoaded.
-    if (!attach()) {
-      document.addEventListener('DOMContentLoaded', attach);
+      }
     }
-  }
+  }).observe(document.body, { childList: true });
 
-  _setupBarbaObserver();
-
-  // ── PUBLIC INIT ───────────────────────────────────────────────────────────
   async function init(page, callback) {
-    const namespace = PAGE_NAMESPACE[page] || page;
+    _registry[page] = callback;
 
-    // Register for Barba re-triggers on soft navigation (BUG 2 FIX).
-    _registry[namespace] = callback;
-
-    // Run immediately for hard load / direct URL visit.
+    // Run immediately for the initial hard load / direct URL visit
     try {
       const data = await fetchData();
       applyMeta(data);
