@@ -1,12 +1,6 @@
 // ============================================================
-//  PORTFOLIO LOADER  –  JSONBin.io + live updates + Barba fix
-//
-//  THE CORE PROBLEM:
-//  Barba.js fetches pages via XHR and inserts them via innerHTML.
-//  Browsers strip <script> tags from innerHTML, so PortfolioLoader.init()
-//  in the fetched page never runs. The fix: monkey-patch XMLHttpRequest
-//  to intercept Barba's fetched HTML, extract the PortfolioLoader.init()
-//  call, and re-execute it after Barba inserts the container.
+//  PORTFOLIO LOADER  –  JSONBin.io + live updates
+//  No Barba. Each page loads normally, scripts run naturally.
 // ============================================================
 
 const JSONBIN_CONFIG = {
@@ -113,61 +107,10 @@ function _hash(obj) {
   return h;
 }
 
-// ── XHR INTERCEPT ────────────────────────────────────────────────────────────
-// Barba fetches pages via XHR. We intercept the response to extract the
-// PortfolioLoader.init() script before Barba strips it via innerHTML.
-// We queue the script text and execute it after Barba inserts the container.
-(function() {
-  const OrigXHR = window.XMLHttpRequest;
-  function PatchedXHR() {
-    const xhr = new OrigXHR();
-    const origOpen = xhr.open.bind(xhr);
-    const origSend = xhr.send.bind(xhr);
-    let _url = '';
-
-    xhr.open = function(method, url, ...rest) {
-      _url = url;
-      return origOpen(method, url, ...rest);
-    };
-
-    xhr.send = function(...args) {
-      xhr.addEventListener('load', function() {
-        // Only intercept Barba's page requests (they set x-barba header)
-        // We detect them by checking the response for barba-container
-        if (xhr.responseText && xhr.responseText.includes('barba-container')) {
-          try {
-            // Extract the inline script that calls PortfolioLoader.init(...)
-            const match = xhr.responseText.match(
-              /<script[^>]*>\s*(PortfolioLoader\.init\([^<]+)<\/script>/s
-            );
-            if (match) {
-              window.__plPendingScript = match[1];
-            }
-          } catch(e) {}
-        }
-      });
-      return origSend(...args);
-    };
-
-    // Proxy all other properties/methods
-    return new Proxy(xhr, {
-      get(target, prop) {
-        const val = target[prop];
-        return typeof val === 'function' ? val.bind(target) : val;
-      },
-      set(target, prop, val) {
-        target[prop] = val;
-        return true;
-      }
-    });
-  }
-  PatchedXHR.prototype = OrigXHR.prototype;
-  window.XMLHttpRequest = PatchedXHR;
-})();
-
 const PortfolioLoader = (() => {
 
-  const _registry = {};
+  let _page = null;
+  let _callback = null;
   let _lastHash = null;
 
   function nl2br(str) {
@@ -177,17 +120,14 @@ const PortfolioLoader = (() => {
 
   function applyMeta(data) {
     const m = data.meta || {};
-    if (m.siteTitle) document.title = document.title || m.siteTitle;
-
     document.querySelectorAll('#js_topBack, .ly_header_title a').forEach(el => {
-      if (el && m.ownerName) {
+      if (m.ownerName) {
         const parts = m.ownerName.split(' ');
         el.innerHTML = parts.length > 1
           ? `${parts[0]} <br class="is_br">${parts.slice(1).join(' ')}`
           : m.ownerName;
       }
     });
-
     document.querySelectorAll('a[href]').forEach(a => {
       const href = a.getAttribute('href') || '';
       if (href.includes('instagram.com') && m.instagram) a.href = m.instagram;
@@ -196,65 +136,43 @@ const PortfolioLoader = (() => {
       if (href.includes('github.com')    && m.github)    a.href = m.github;
       if (href.startsWith('mailto:')     && m.email)     a.href = 'mailto:' + m.email;
     });
-
     document.querySelectorAll('a[href*="pantheonsite"], a[href*="dev-rutveek"]').forEach(a => {
       if (m.blog) a.href = m.blog;
     });
   }
 
-  // ── Barba MutationObserver: execute the pending script after container insert ──
-  new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      for (const node of mutation.addedNodes) {
-        if (node.nodeType === 1 && node.classList && node.classList.contains('barba-container')) {
-          const pending = window.__plPendingScript;
-          if (pending) {
-            window.__plPendingScript = null;
-            try {
-              // Re-execute the PortfolioLoader.init() call from the fetched page
-              new Function(pending)();
-            } catch(e) {
-              console.error('[PortfolioLoader] Failed to execute page script:', e);
-            }
-          }
-        }
-      }
-    }
-  }).observe(document.body, { childList: true });
-
-  // ── BroadcastChannel: instant update when admin saves ──
+  // ── BroadcastChannel: instant update when admin saves (same browser) ──
   try {
     const ch = new BroadcastChannel('portfolio_update');
     ch.onmessage = async (e) => {
-      if (e.data && e.data.type === 'data_updated') {
-        const page = Object.keys(_registry)[0]; // current page's registered callback
-        if (!page) return;
+      if (e.data && e.data.type === 'data_updated' && _callback) {
         const data = await _loadDataAsync();
         _lastHash = _hash(data);
         applyMeta(data);
-        _registry[page](data);
+        _callback(data);
       }
     };
   } catch(_) {}
 
-  // ── Polling every 10s for other browsers/devices ──
-  async function _poll(page) {
+  // ── Polling every 10s: picks up changes on other browsers/devices ──
+  async function _poll() {
+    if (!_callback) return;
     const data = await _loadDataAsync();
     const h = _hash(data);
     if (h === _lastHash) return;
     _lastHash = h;
     applyMeta(data);
-    if (_registry[page]) _registry[page](data);
+    _callback(data);
   }
 
   async function init(page, callback) {
-    _registry[page] = callback;
+    _page = page;
+    _callback = callback;
     const data = await _loadDataAsync();
     _lastHash = _hash(data);
     applyMeta(data);
     if (typeof callback === 'function') callback(data);
-    // Start polling — clears on each hard navigation naturally
-    setInterval(() => _poll(page), 10000);
+    setInterval(_poll, 10000);
   }
 
   return { init, nl2br, applyMeta };
